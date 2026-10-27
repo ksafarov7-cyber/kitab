@@ -58,8 +58,6 @@ dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}di
 <div id="pop" hidden><div id="pw"></div><div id="pt"></div><div id="pm"></div><div id="pa"><button id="pStar" class="fill">☆ Lüğətə əlavə et</button><button id="pSay" title="Səsləndir">🔊</button><button id="pX">✕</button></div></div>
 <dialog id="dlg"><b>Tərcümə dilləri</b><label>Oxuduğum dil</label><select id="sSrc"></select><label>Tərcümə olunacaq dil</label><select id="sDst"></select><p style="text-align:right;margin:16px 0 0"><button class="fill" id="sOk">Yadda saxla</button></p></dialog>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -105,7 +103,16 @@ async function openBook(b){
   else{el.textContent=await b.blob.text();el.style.fontSize=cfg.size/110*20+'px';bind(el,document,null,false);el.scrollTop=LS('pos:'+b.id,0);el.onscroll=()=>SV('pos:'+b.id,el.scrollTop)}
  }catch(e){$('#prog').textContent='Fayl açılmadı: '+e.message}
 }
+/* ---------- kitabxanaları ehtiyatla yüklə (EPUB üçün) ---------- */
+function loadScript(urls){return urls.reduce((p,u)=>p.catch(()=>new Promise((res,rej)=>{const e=document.createElement('script');e.src=u;e.onload=res;e.onerror=()=>rej(new Error('Yüklənmədi: '+u));document.head.append(e)})),Promise.reject())}
+async function needEpub(){
+ if(window.ePub)return;
+ if(!window.JSZip)await loadScript(['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js','https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js']);
+ await loadScript(['https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js','https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js']);
+ if(!window.ePub)throw new Error('epub.js yüklənmədi. İnterneti yoxla.');
+}
 async function openEpub(b){
+ await needEpub();
  const book=ePub(await b.blob.arrayBuffer(),{openAs:'binary'});
  await book.opened;
  const mk=flow=>{const r=book.renderTo('epubView',{width:'100%',height:'100%',flow,spread:'none'});
