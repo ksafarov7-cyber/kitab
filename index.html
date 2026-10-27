@@ -17,8 +17,8 @@ main{flex:1;min-height:0;position:relative}
 section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
 #lib{padding:20px;max-width:760px;margin:auto}
 #lib h2{font:600 28px var(--serif);margin:8px 0 4px}#lib p{color:var(--mute);margin:0 0 18px}
-.book{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
-.book .t{flex:1;cursor:pointer;font:17px var(--serif)}.book small{display:block;color:var(--mute);font:12px system-ui}
+.book{display:flex;align-items:flex-start;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.book .t{flex:1;min-width:0;font:17px var(--serif)}.book .nm{cursor:pointer;overflow-wrap:anywhere;word-break:break-word;line-height:1.3}.book>button{flex:none}.book>.ext{flex:none;margin-top:3px}.book small{display:block;color:var(--mute);font:12px system-ui}
 .book .act{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:13px system-ui;color:var(--mute)}.book .act button{border-color:var(--line);font-size:13px;padding:4px 9px}.book .act button:disabled{opacity:.4}
 .ext{font:600 11px system-ui;border:1px solid var(--line);border-radius:5px;padding:3px 6px;color:var(--mute)}
 #reader{display:flex;flex-direction:column}
@@ -287,8 +287,10 @@ function show(anchor){
 function tap(e){
  const h=pick(e.clientX,e.clientY);
  if(!h){if(ps)hidePop();return}                       /* boş yerə klik → açıq tərcümə bağlanır */
- if(ps&&S&&S.unit===h.unit){                           /* yan-yana söz → seçim genişlənir */
-  if(h.i===S.b+1)S.b=h.i;else if(h.i===S.a-1)S.a=h.i;else{hidePop();return}
+ if(ps&&S&&S.unit===h.unit){                           /* eyni abzasda başqa sözə toxun → aradakı hamısı seçilir */
+  if(h.i>S.b)S.b=h.i;else if(h.i<S.a)S.a=h.i;
+  else if(S.a<S.b&&h.i===S.b)S.b--;else if(S.a<S.b&&h.i===S.a)S.a++;
+  else{hidePop();return}
   show(h.i);return}
  if(ps){hidePop();return}                              /* başqa yerə klik → yalnız bağla */
  S={unit:h.unit,a:h.i,b:h.i};show(h.i);                /* açıq tərcümə yoxdursa → aç */
@@ -352,8 +354,8 @@ function showPop(text,rect,fr,ctx){
 }
 function place(){
  const p=$('#pop'),w=p.offsetWidth,h=p.offsetHeight,r=ps.r;
- let l=Math.max(8,Math.min(innerWidth-w-8,(r.l+r.rt)/2-w/2)),t=r.b+10;
- if(t+h>innerHeight-8)t=r.tp-h-10;t=Math.max(8,Math.min(innerHeight-h-8,t));p.style.left=l+'px';p.style.top=t+'px';
+ let l=Math.max(8,Math.min(innerWidth-w-8,(r.l+r.rt)/2-w/2)),t=r.tp-h-10;
+ if(t<8)t=r.b+10;t=Math.max(8,Math.min(innerHeight-h-8,t));p.style.left=l+'px';p.style.top=t+'px';
 }
 function hidePop(){$('#pop').hidden=true;ps=null;S=null;clearHL()}
 const key=s=>s.toLowerCase();
