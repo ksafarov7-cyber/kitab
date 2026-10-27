@@ -116,7 +116,13 @@ async function openEpub(b){
  const book=ePub(await b.blob.arrayBuffer(),{openAs:'binary'});
  await book.opened;
  const mk=flow=>{const r=book.renderTo('epubView',{width:'100%',height:'100%',flow,spread:'none'});
-  r.hooks.content.register(c=>{const d=c.document;bind(d,d,d.defaultView.frameElement,flow==='paginated');d.addEventListener('keydown',keyNav)});return r};
+  const err=x=>{$('#prog').textContent='Xəta: '+(x&&x.message||x)};
+  r.hooks.content.register(c=>{try{const d=c.document;let fe=null;try{fe=d.defaultView.frameElement}catch{}bind(d,d,fe,flow==='paginated');d.addEventListener('keydown',keyNav)}catch(x){err(x)}});
+  /* ehtiyat: epub.js-in öz hadisələri */
+  r.on('click',(e,c)=>setTimeout(()=>{if(Date.now()-lastShow<600)return;try{tap(c.document,e,c.document.defaultView.frameElement)}catch(x){err(x)}},120));
+  r.on('selected',(cfi,c)=>setTimeout(()=>{if(Date.now()-lastShow<1500)return;try{const d=c.document,s=d.getSelection();if(!s||s.isCollapsed)return;
+   const t=s.toString().replace(/\s+/g,' ').trim();if(t.length>1)showPop(t,s.getRangeAt(0).getBoundingClientRect(),d.defaultView.frameElement,'')}catch(x){err(x)}},300));
+  return r};
  rend=mk('paginated');themeEpub();
  try{await rend.display(LS('pos:'+b.id,undefined))}
  catch(e1){
@@ -156,13 +162,13 @@ function bind(target,d,fr,swipe){
  let p;
  target.addEventListener('pointerdown',e=>{p=[e.clientX,e.clientY];hidePop()});
  target.addEventListener('pointerup',e=>{if(!p)return;const dx=e.clientX-p[0],dy=e.clientY-p[1];
-  if(Math.hypot(dx,dy)<10)setTimeout(()=>tap(d,e,fr),30);
+  if(Math.hypot(dx,dy)<10)setTimeout(()=>{try{tap(d,e,fr)}catch(x){$('#prog').textContent='Xəta: '+x.message}},30);
   else if(swipe&&Math.abs(dx)>70&&Math.abs(dy)<50&&!d.getSelection().toString())dx<0?next():prev()});
  let t;d.addEventListener('selectionchange',()=>{clearTimeout(t);t=setTimeout(()=>{
   const s=d.getSelection();if(!s||s.isCollapsed||!s.rangeCount)return;
   if(d===document&&!target.contains(s.anchorNode))return;
   const txt=s.toString().replace(/\s+/g,' ').trim();if(txt.length<2)return;
-  showPop(txt,s.getRangeAt(0).getBoundingClientRect(),fr,'')},650)});
+  try{showPop(txt,s.getRangeAt(0).getBoundingClientRect(),fr,'')}catch(x){$('#prog').textContent='Xəta: '+x.message}},650)});
 }
 function tap(d,e,fr){
  const s=d.getSelection();if(s&&s.toString().trim())return;
@@ -231,8 +237,9 @@ async function tr(text){
 }
 
 /* ---------- popup ---------- */
-let ps=null;
+let ps=null,lastShow=0;
 function showPop(text,rect,fr,ctx){
+ lastShow=Date.now();
  const o=fr?fr.getBoundingClientRect():{left:0,top:0};
  ps={text,ctx,t:'',r:{l:rect.left+o.left,rt:rect.right+o.left,tp:rect.top+o.top,b:rect.bottom+o.top}};
  $('#pw').textContent=text;$('#pt').textContent='…';$('#pm').textContent='';$('#pop').hidden=false;starState();place();
@@ -246,7 +253,7 @@ function showPop(text,rect,fr,ctx){
 function place(){
  const p=$('#pop'),w=p.offsetWidth,h=p.offsetHeight,r=ps.r;
  let l=Math.max(8,Math.min(innerWidth-w-8,(r.l+r.rt)/2-w/2)),t=r.b+10;
- if(t+h>innerHeight-8)t=Math.max(8,r.tp-h-10);p.style.left=l+'px';p.style.top=t+'px';
+ if(t+h>innerHeight-8)t=r.tp-h-10;t=Math.max(8,Math.min(innerHeight-h-8,t));p.style.left=l+'px';p.style.top=t+'px';
 }
 function hidePop(){$('#pop').hidden=true;ps=null;clearHL()}
 const key=s=>s.toLowerCase();
