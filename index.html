@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="az"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14181a"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
+<title>Oxu</title>
+<style>
+:root{--bg:#eef1ec;--panel:#fff;--ink:#1b2420;--mute:#6b7771;--line:#d3dad4;--acc:#1f6f5c;--mark:#f2c14e;--serif:Charter,'Iowan Old Style','Palatino Linotype',Georgia,serif}
+body.dark{--bg:#14181a;--panel:#1d2326;--ink:#e4ebe5;--mute:#8d9a93;--line:#2c353a;--acc:#5fc2a5}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{display:flex;align-items:center;gap:4px;padding:6px 10px;border-bottom:1px solid var(--line)}
+header h1{flex:1;margin:0;font:600 16px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button,select{font:inherit;color:inherit;background:none;border:1px solid transparent;border-radius:8px;padding:6px 10px;cursor:pointer}
+button:hover{background:var(--panel);border-color:var(--line)}button:focus-visible,select:focus-visible{outline:2px solid var(--acc)}
+.fill{background:var(--acc);color:#fff;border-color:var(--acc)}.fill:hover{background:var(--acc);opacity:.9}
+main{flex:1;min-height:0;position:relative}
+section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
+#lib{padding:20px;max-width:760px;margin:auto}
+#lib h2{font:600 28px var(--serif);margin:8px 0 4px}#lib p{color:var(--mute);margin:0 0 18px}
+.book{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.book .t{flex:1;cursor:pointer;font:17px var(--serif)}.book small{display:block;color:var(--mute);font:12px system-ui}
+.ext{font:600 11px system-ui;border:1px solid var(--line);border-radius:5px;padding:3px 6px;color:var(--mute)}
+#reader{display:flex;flex-direction:column}
+#stage{flex:1;min-height:0;position:relative}
+#epubView{position:absolute;inset:0 0 0 0;padding:0 14px}
+#pdfView,#txtView{position:absolute;inset:0;overflow:auto}
+#txtView{white-space:pre-wrap;font:20px/1.7 var(--serif);padding:24px max(16px,calc(50% - 360px))}
+.pg{position:relative;margin:8px auto;background:#fff;box-shadow:0 1px 8px #0003}
+body.dark .pg canvas{filter:invert(.9) hue-rotate(180deg)}
+.textLayer{position:absolute;inset:0;line-height:1}.textLayer span{position:absolute;color:transparent;white-space:pre;transform-origin:0 0}
+.textLayer ::selection{background:#f2c14e88}
+#bar{display:flex;align-items:center;justify-content:center;gap:12px;padding:6px;border-top:1px solid var(--line);color:var(--mute);font-size:13px}
+#pop{position:fixed;z-index:9;width:min(340px,calc(100vw - 16px));background:var(--panel);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:10px;box-shadow:0 8px 28px #0004;padding:10px 12px}
+#pw{font:600 15px var(--serif);color:var(--mute);max-height:64px;overflow:auto}
+#pt{font:19px/1.35 var(--serif);margin:4px 0 8px;max-height:36vh;overflow:auto}
+#pa{display:flex;gap:4px}#pa button{border-color:var(--line);padding:5px 9px}
+#dict{padding:16px;max-width:760px;margin:auto}
+.row{padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:flex-start}
+.row div{flex:1}.row b{font:600 18px var(--serif)}.row i{display:block;color:var(--mute);font-size:13px;margin-top:2px}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:min(320px,90vw)}
+dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}dialog select{width:100%;border-color:var(--line);background:var(--panel)}
+.empty{color:var(--mute);padding:24px 0}
+</style></head><body>
+<header>
+ <button id="bBack" title="Kitabxana">☰</button><h1 id="title">Oxu</h1>
+ <button id="bMinus" title="Kiçilt">A−</button><button id="bPlus" title="Böyüt">A+</button>
+ <button id="bTheme" title="Tünd/açıq">◐</button><button id="bDict" title="Lüğətim">★ <span id="cnt">0</span></button><button id="bSet" title="Tərcümə dilləri">⚙</button>
+</header>
+<main>
+ <section id="lib"><h2>Kitabxana</h2><p>PDF, EPUB və TXT faylları. Kitablar yalnız bu cihazda saxlanılır.</p>
+  <button class="fill" id="bAdd">+ Kitab əlavə et</button><input type="file" id="file" accept=".pdf,.epub,.txt" multiple hidden>
+  <div id="books"></div></section>
+ <section id="reader" hidden><div id="stage"><div id="epubView" hidden></div><div id="pdfView" hidden></div><div id="txtView" hidden></div></div>
+  <div id="bar"><button id="bPrev">‹ Əvvəlki</button><span id="prog"></span><button id="bNext">Növbəti ›</button></div></section>
+ <section id="dict" hidden></section>
+</main>
+<div id="pop" hidden><div id="pw"></div><div id="pt"></div><div id="pa"><button id="pStar" class="fill">☆ Lüğətə əlavə et</button><button id="pSay" title="Səsləndir">🔊</button><button id="pX">✕</button></div></div>
+<dialog id="dlg"><b>Tərcümə dilləri</b><label>Oxuduğum dil</label><select id="sSrc"></select><label>Tərcümə olunacaq dil</label><select id="sDst"></select><p style="text-align:right;margin:16px 0 0"><button class="fill" id="sOk">Yadda saxla</button></p></dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch{return d}};
+const SV=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+let cfg=Object.assign({src:'Autodetect',dst:'az',size:110,dark:false},LS('cfg',{}));
+let dict=LS('dict',[]);
+const LANGS=[['Autodetect','Avtomatik'],['en','English'],['tr','Türkçe'],['ru','Русский'],['de','Deutsch'],['fr','Français'],['es','Español'],['it','Italiano'],['ar','العربية'],['az','Azərbaycanca']];
+if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ---------- storage (IndexedDB) ---------- */
+const db=new Promise((res,rej)=>{const r=indexedDB.open('oxu',1);r.onupgradeneeded=()=>r.result.createObjectStore('books',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const tx=async(m,f)=>{const d=await db;return new Promise((res,rej)=>{const t=d.transaction('books',m);const o=f(t.objectStore('books'));t.oncomplete=()=>res(o.result);t.onerror=()=>rej(t.error)})};
+
+/* ---------- views ---------- */
+function view(n){['lib','reader','dict'].forEach(v=>$('#'+v).hidden=v!==n);hidePop();if(n!=='reader')$('#title').textContent='Oxu'}
+async function renderLib(){
+ const list=(await tx('readonly',s=>s.getAll())).sort((a,b)=>b.added-a.added);
+ $('#books').innerHTML=list.length?'':'<div class="empty">Hələ kitab yoxdur. Yuxarıdakı düymə ilə fayl seç.</div>';
+ list.forEach(b=>{const d=document.createElement('div');d.className='book';
+  d.innerHTML=`<span class="ext">${b.type.toUpperCase()}</span><div class="t">${esc(b.name)}<small>${(b.blob.size/1048576).toFixed(1)} MB</small></div><button title="Sil">🗑</button>`;
+  d.querySelector('.t').onclick=()=>openBook(b);
+  d.querySelector('button').onclick=async()=>{if(confirm('Kitab silinsin?')){await tx('readwrite',s=>s.delete(b.id));renderLib()}};
+  $('#books').append(d)});
+}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('#bAdd').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{
+ for(const f of e.target.files){const ext=f.name.split('.').pop().toLowerCase();if(!['pdf','epub','txt'].includes(ext))continue;
+  await tx('readwrite',s=>s.put({id:Date.now()+Math.random().toString(36).slice(2),name:f.name.replace(/\.\w+$/,''),type:ext,blob:f,added:Date.now()}))}
+ e.target.value='';renderLib()};
+$('#bBack').onclick=()=>{cleanup();view('lib');renderLib()};
+
+/* ---------- reader ---------- */
+let cur,rend,pdf,pg=1;
+function cleanup(){try{rend&&rend.destroy()}catch{}rend=pdf=null;['epubView','pdfView','txtView'].forEach(i=>{$('#'+i).innerHTML='';$('#'+i).hidden=true})}
+async function openBook(b){
+ cleanup();cur=b;view('reader');$('#title').textContent=b.name;$('#prog').textContent='';
+ const el=$({epub:'#epubView',pdf:'#pdfView',txt:'#txtView'}[b.type]);el.hidden=false;
+ try{
+  if(b.type==='epub')await openEpub(b);
+  else if(b.type==='pdf'){pdf=await pdfjsLib.getDocument({data:await b.blob.arrayBuffer()}).promise;pg=LS('pos:'+b.id,1);bind(el,document,null,true);await renderPdf()}
+  else{el.textContent=await b.blob.text();el.style.fontSize=cfg.size/110*20+'px';bind(el,document,null,false);el.scrollTop=LS('pos:'+b.id,0);el.onscroll=()=>SV('pos:'+b.id,el.scrollTop)}
+ }catch(e){$('#prog').textContent='Fayl açılmadı: '+e.message}
+}
+async function openEpub(b){
+ const book=ePub(await b.blob.arrayBuffer());
+ rend=book.renderTo('epubView',{width:'100%',height:'100%',flow:'paginated',spread:'none'});
+ rend.hooks.content.register(c=>{const d=c.document;bind(d,d,d.defaultView.frameElement,true);d.addEventListener('keydown',keyNav)});
+ themeEpub();
+ await rend.display(LS('pos:'+b.id,undefined));
+ book.ready.then(()=>book.locations.generate(1500)).then(()=>{const l=rend.currentLocation();if(l&&l.start)prog(l)}).catch(()=>{});
+ rend.on('relocated',l=>{SV('pos:'+b.id,l.start.cfi);prog(l)});
+ function prog(l){const p=book.locations.length()?book.locations.percentageFromCfi(l.start.cfi):l.start.percentage;$('#prog').textContent=Math.round((p||0)*100)+'%'}
+}
+function themeEpub(){if(!rend)return;rend.themes.fontSize(cfg.size+'%');
+ rend.themes.override('color',cfg.dark?'#e4ebe5':'#1b2420');rend.themes.override('background',cfg.dark?'#14181a':'#eef1ec');
+ rend.themes.override('font-family','Charter,"Iowan Old Style",Georgia,serif');rend.themes.override('line-height','1.65')}
+async function renderPdf(){
+ const v=$('#pdfView');v.innerHTML='';const page=await pdf.getPage(pg);
+ const base=page.getViewport({scale:1}),scale=Math.min((v.clientWidth-16)/base.width,2.4)*cfg.size/110,vp=page.getViewport({scale}),dpr=devicePixelRatio||1;
+ const w=document.createElement('div');w.className='pg';w.style.width=vp.width+'px';w.style.height=vp.height+'px';
+ const cv=document.createElement('canvas');cv.width=vp.width*dpr;cv.height=vp.height*dpr;cv.style.width=vp.width+'px';cv.style.height=vp.height+'px';
+ const tl=document.createElement('div');tl.className='textLayer';w.append(cv,tl);v.append(w);v.scrollTop=0;
+ $('#prog').textContent=pg+' / '+pdf.numPages;SV('pos:'+cur.id,pg);
+ await page.render({canvasContext:cv.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
+ pdfjsLib.renderTextLayer({textContentSource:await page.getTextContent(),container:tl,viewport:vp,textDivs:[]});
+}
+const go=n=>{if(pdf&&pg+n>=1&&pg+n<=pdf.numPages){pg+=n;renderPdf()}};
+const next=()=>cur&&(cur.type==='epub'?rend&&rend.next():go(1)),prev=()=>cur&&(cur.type==='epub'?rend&&rend.prev():go(-1));
+$('#bNext').onclick=next;$('#bPrev').onclick=prev;
+const keyNav=e=>{if(e.key==='ArrowRight'||e.key==='PageDown')next();if(e.key==='ArrowLeft'||e.key==='PageUp')prev()};
+document.addEventListener('keydown',keyNav);
+function applySize(){if(!cur)return;if(cur.type==='epub')themeEpub();else if(cur.type==='pdf')renderPdf();else $('#txtView').style.fontSize=cfg.size/110*20+'px'}
+$('#bPlus').onclick=()=>{cfg.size=Math.min(220,cfg.size+10);SV('cfg',cfg);applySize()};
+$('#bMinus').onclick=()=>{cfg.size=Math.max(70,cfg.size-10);SV('cfg',cfg);applySize()};
+function applyTheme(){document.body.classList.toggle('dark',cfg.dark);document.querySelector('meta[name=theme-color]').content=cfg.dark?'#14181a':'#eef1ec';themeEpub()}
+$('#bTheme').onclick=()=>{cfg.dark=!cfg.dark;SV('cfg',cfg);applyTheme()};
+
+/* ---------- tap / selection -> translate ---------- */
+function bind(target,d,fr,swipe){
+ let p;
+ target.addEventListener('pointerdown',e=>{p=[e.clientX,e.clientY];hidePop()});
+ target.addEventListener('pointerup',e=>{if(!p)return;const dx=e.clientX-p[0],dy=e.clientY-p[1];
+  if(Math.hypot(dx,dy)<10)setTimeout(()=>tap(d,e,fr),30);
+  else if(swipe&&Math.abs(dx)>70&&Math.abs(dy)<50&&!d.getSelection().toString())dx<0?next():prev()});
+ let t;d.addEventListener('selectionchange',()=>{clearTimeout(t);t=setTimeout(()=>{
+  const s=d.getSelection();if(!s||s.isCollapsed||!s.rangeCount)return;
+  if(d===document&&!target.contains(s.anchorNode))return;
+  const txt=s.toString().replace(/\s+/g,' ').trim();if(txt.length<2)return;
+  showPop(txt,s.getRangeAt(0).getBoundingClientRect(),fr,'')},650)});
+}
+function tap(d,e,fr){
+ const s=d.getSelection();if(s&&s.toString().trim())return;
+ const w=wordAt(d,e.clientX,e.clientY);if(!w)return;showPop(w.word,w.rect,fr,w.ctx);
+}
+function wordAt(d,x,y){
+ let r;if(d.caretRangeFromPoint)r=d.caretRangeFromPoint(x,y);else{const c=d.caretPositionFromPoint(x,y);if(!c)return;r=d.createRange();r.setStart(c.offsetNode,c.offset)}
+ if(!r)return;const n=r.startContainer;if(n.nodeType!==3)return;
+ const t=n.textContent,re=/[\p{L}\p{M}'’\-]/u;let s=r.startOffset,e=s;
+ while(s>0&&re.test(t[s-1]))s--;while(e<t.length&&re.test(t[e]))e++;
+ if(s===e)return;const rg=d.createRange();rg.setStart(n,s);rg.setEnd(n,e);
+ const b=rg.getBoundingClientRect();if(x<b.left-4||x>b.right+4||y<b.top-4||y>b.bottom+4)return;
+ const a=t.slice(0,s),z=t.slice(e),st=Math.max(a.lastIndexOf('. '),a.lastIndexOf('! '),a.lastIndexOf('? '))+1;
+ let en=z.search(/[.!?]/);en=en<0?t.length:e+en+1;
+ return{word:t.slice(s,e).replace(/^[-'’]+|[-'’]+$/g,''),rect:b,ctx:t.slice(st,en).trim()};
+}
+
+/* ---------- translation (MyMemory, açar tələb olunmur) ---------- */
+const cache={},dec=s=>{const t=document.createElement('textarea');t.innerHTML=s;return t.value};
+async function tr(text){
+ const k=cfg.src+cfg.dst+text;if(cache[k])return cache[k];
+ const parts=text.match(/[^.!?]+[.!?]*\s*/g)||[text],ch=[];let c='';
+ for(const p of parts){if((c+p).length>450&&c){ch.push(c);c=p}else c+=p}if(c)ch.push(c);
+ const out=await Promise.all(ch.map(async x=>{
+  const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(x.trim())+'&langpair='+cfg.src+'|'+cfg.dst);
+  const j=await r.json();if(+j.responseStatus!==200)throw new Error(j.responseDetails);return dec(j.responseData.translatedText)}));
+ return cache[k]=out.join(' ');
+}
+
+/* ---------- popup ---------- */
+let ps=null;
+function showPop(text,rect,fr,ctx){
+ const o=fr?fr.getBoundingClientRect():{left:0,top:0};
+ ps={text,ctx,t:'',r:{l:rect.left+o.left,rt:rect.right+o.left,tp:rect.top+o.top,b:rect.bottom+o.top}};
+ $('#pw').textContent=text;$('#pt').textContent='…';$('#pop').hidden=false;starState();place();
+ tr(text).then(t=>{if(ps&&ps.text===text){ps.t=t;$('#pt').textContent=t;place()}})
+  .catch(()=>{if(ps&&ps.text===text){$('#pt').textContent='Tərcümə alınmadı. İnterneti yoxla və ya dilləri ⚙ ilə dəyiş.'}});
+}
+function place(){
+ const p=$('#pop'),w=p.offsetWidth,h=p.offsetHeight,r=ps.r;
+ let l=Math.max(8,Math.min(innerWidth-w-8,(r.l+r.rt)/2-w/2)),t=r.b+10;
+ if(t+h>innerHeight-8)t=Math.max(8,r.tp-h-10);p.style.left=l+'px';p.style.top=t+'px';
+}
+function hidePop(){$('#pop').hidden=true;ps=null}
+const key=s=>s.toLowerCase();
+function starState(){const has=ps&&dict.some(d=>key(d.w)===key(ps.text));$('#pStar').textContent=has?'★ Lüğətdədir':'☆ Lüğətə əlavə et'}
+$('#pStar').onclick=()=>{if(!ps)return;const i=dict.findIndex(d=>key(d.w)===key(ps.text));
+ if(i>=0)dict.splice(i,1);else dict.unshift({w:ps.text,t:ps.t,ctx:ps.ctx,book:cur?cur.name:'',date:Date.now()});
+ SV('dict',dict);starState();count()};
+$('#pX').onclick=hidePop;
+$('#pSay').onclick=()=>ps&&say(ps.text);
+function say(t){const u=new SpeechSynthesisUtterance(t);u.lang=cfg.src==='Autodetect'?'en':cfg.src;speechSynthesis.cancel();speechSynthesis.speak(u)}
+const count=()=>$('#cnt').textContent=dict.length;
+
+/* ---------- dictionary ---------- */
+$('#bDict').onclick=()=>{view('dict');renderDict()};
+function renderDict(){
+ const d=$('#dict');d.innerHTML='<h2 style="font:600 28px var(--serif);margin:8px 0 12px">Lüğətim</h2>';
+ if(!dict.length){d.innerHTML+='<div class="empty">Boşdur. Oxuyarkən sözə toxun və “Lüğətə əlavə et” düyməsini bas.</div>';return}
+ const b=document.createElement('button');b.className='fill';b.textContent='CSV kimi yüklə (Anki üçün)';b.onclick=exportCsv;d.append(b);
+ dict.forEach((x,i)=>{const r=document.createElement('div');r.className='row';
+  r.innerHTML=`<div><b>${esc(x.w)}</b> — ${esc(x.t||'')}${x.ctx?`<i>${esc(x.ctx)}</i>`:''}${x.book?`<i>${esc(x.book)}</i>`:''}</div><button title="Səsləndir">🔊</button><button title="Sil">🗑</button>`;
+  const [s,del]=r.querySelectorAll('button');s.onclick=()=>say(x.w);del.onclick=()=>{dict.splice(i,1);SV('dict',dict);count();renderDict()};d.append(r)});
+}
+function exportCsv(){
+ const q=s=>'"'+String(s||'').replace(/"/g,'""')+'"';
+ const csv=dict.map(x=>[x.w,x.t,x.ctx,x.book].map(q).join(',')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download='lugetim.csv';a.click()}
+
+/* ---------- settings ---------- */
+const fill=(el,skipAuto,val)=>{el.innerHTML=LANGS.filter(l=>!(skipAuto&&l[0]==='Autodetect')).map(l=>`<option value="${l[0]}"${l[0]===val?' selected':''}>${l[1]}</option>`).join('')};
+$('#bSet').onclick=()=>{fill($('#sSrc'),false,cfg.src);fill($('#sDst'),true,cfg.dst);$('#dlg').showModal()};
+$('#sOk').onclick=()=>{cfg.src=$('#sSrc').value;cfg.dst=$('#sDst').value;SV('cfg',cfg);$('#dlg').close()};
+
+/* ---------- start ---------- */
+applyTheme();count();renderLib();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
+</script></body></html>
