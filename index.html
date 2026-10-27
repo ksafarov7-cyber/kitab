@@ -130,7 +130,7 @@ async function openEpub(b){
   catch(e2){try{rend.destroy()}catch{}$('#epubView').innerHTML='';rend=mk('scrolled-doc');themeEpub();await rend.display()}
  }
  book.locations.generate(1500).then(()=>{const l=rend&&rend.currentLocation();if(l&&l.start)prog(l)}).catch(()=>{});
- rend.on('relocated',l=>{hidePop();SV('pos:'+b.id,l.start.cfi);prog(l)});
+ let lastCfi=null;rend.on('relocated',l=>{if(l.start.cfi!==lastCfi){lastCfi=l.start.cfi;hidePop()}SV('pos:'+b.id,l.start.cfi);prog(l)});
  function prog(l){const p=book.locations.length()?book.locations.percentageFromCfi(l.start.cfi):l.start.percentage;$('#prog').textContent=Math.round((p||0)*100)+'%'}
 }
 function themeEpub(){if(!rend)return;rend.themes.fontSize(cfg.size+'%');
@@ -170,9 +170,11 @@ function bind(target,d,fr,swipe){
   const txt=s.toString().replace(/\s+/g,' ').trim();if(txt.length<2)return;
   try{showPop(txt,s.getRangeAt(0).getBoundingClientRect(),fr,'')}catch(x){$('#prog').textContent='Xəta: '+x.message}},650)});
 }
+let dbgT;function dbg(m){const el=$('#prog'),old=el.dataset.o??el.textContent;el.dataset.o=old;el.textContent=m;clearTimeout(dbgT);dbgT=setTimeout(()=>{el.textContent=el.dataset.o;delete el.dataset.o},2500)}
 function tap(d,e,fr){
- const s=d.getSelection();if(s&&s.toString().trim())return;
- const w=wordAt(d,e.clientX,e.clientY);if(!w){hidePop();return}
+ const s=d.getSelection();if(s&&s.toString().trim()){dbg('seçim var');return}
+ const w=wordAt(d,e.clientX,e.clientY);if(!w){dbg('söz tapılmadı');hidePop();return}
+ dbg('söz: '+w.word);
  highlight(d,w.rects);showPop(w.word,w.rect,fr,w.ctx);
 }
 const LETTER=/[\p{L}\p{M}'’\-]/u;
