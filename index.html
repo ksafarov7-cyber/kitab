@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="az"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14181a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Oxu"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
+<meta name="theme-color" content="#14181a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="Oxu"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
 <title>Oxu</title>
 <style>
 :root{--glass:#ffffff;--bg:#eef1ec;--panel:#fff;--ink:#1b2420;--mute:#6b7771;--line:#d3dad4;--acc:#1f6f5c;--mark:#f2c14e;--serif:Charter,'Iowan Old Style','Palatino Linotype',Georgia,serif}
@@ -11,7 +11,7 @@ body.black{--glass:#111111;--bg:#000;--panel:#111;--ink:#d8dcd9;--mute:#7f8a85;-
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;overscroll-behavior:none}
 html{background:#14181a;overscroll-behavior:none}
-header{display:flex;align-items:center;gap:4px;padding:6px 10px;padding-top:calc(env(safe-area-inset-top,0px) + 6px);background:#14181a;color:#e4ebe5;position:relative;z-index:3;-webkit-transform:translateZ(0);transform:translateZ(0)}
+header{display:flex;align-items:center;gap:4px;padding:6px 10px;padding-top:calc(env(safe-area-inset-top,0px) + 6px);background:#14181a;color:#e4ebe5;position:relative;z-index:3}
 @media(hover:hover){header button:hover{background:#2a3338;border-color:#3a464c}}
 header h1{flex:1;margin:0;font:600 16px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 button,select{font:inherit;color:inherit;background:none;border:1px solid transparent;border-radius:8px;padding:6px 10px;cursor:pointer}
@@ -74,7 +74,6 @@ header h1{text-align:center}
 .chip{border:1px solid var(--line);background:var(--panel);padding:6px 12px;font-size:14px}.chip.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
 .th-light{background:#eef1ec;color:#1b2420}.th-sepia{background:#f4ecd8;color:#433422}.th-dark{background:#14181a;color:#e4ebe5}.th-black{background:#000;color:#d8dcd9}
 #dlgT:focus{outline:none}
-body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#14181a;z-index:30;pointer-events:none}
 #epubView,#txtView{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
 #lib{padding:20px;max-width:760px;margin:auto}
@@ -99,7 +98,6 @@ body.dark .pg canvas,body.black .pg canvas{filter:invert(.9) hue-rotate(180deg)}
 #bar{background:var(--panel);display:flex;align-items:center;justify-content:center;gap:12px;padding:6px;border-top:1px solid var(--line);color:var(--mute);font-size:13px}
 body.focus header,body.focus #bar,body.focus #tabs{display:none}
 body.focus #reader{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body.focus::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#14181a;z-index:20}
 #pop{position:fixed;z-index:9;display:flex;flex-direction:column;width:min(340px,calc(100vw - 16px));background:var(--glass);animation:pin .16s ease-out;color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:16px;box-shadow:0 10px 34px #0003;padding:12px 14px}
 @keyframes pin{from{opacity:0;transform:translateY(4px) scale(.98)}}
 #pw{flex:none;font:600 15px var(--serif);color:var(--mute);max-height:64px;overflow:auto}
