@@ -11,7 +11,7 @@ body.black{--glass:rgba(18,18,18,.78);--bg:#000;--panel:#111;--ink:#d8dcd9;--mut
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;overscroll-behavior:none}
 html{background:#14181a;overscroll-behavior:none}
-header{display:flex;align-items:center;gap:4px;padding:6px 10px;padding-top:calc(env(safe-area-inset-top,0px) + 6px);background:rgba(20,24,26,.78);color:#e4ebe5;-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);position:relative;z-index:3}
+header{display:flex;align-items:center;gap:4px;padding:6px 10px;padding-top:calc(env(safe-area-inset-top,0px) + 6px);background:#14181a;color:#e4ebe5;position:relative;z-index:3}
 @media(hover:hover){header button:hover{background:#2a3338;border-color:#3a464c}}
 header h1{flex:1;margin:0;font:600 16px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 button,select{font:inherit;color:inherit;background:none;border:1px solid transparent;border-radius:8px;padding:6px 10px;cursor:pointer}
@@ -82,7 +82,7 @@ body.dark .pg canvas,body.black .pg canvas{filter:invert(.9) hue-rotate(180deg)}
 #bar{background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);display:flex;align-items:center;justify-content:center;gap:12px;padding:6px;border-top:1px solid var(--line);color:var(--mute);font-size:13px}
 body.focus header,body.focus #bar,body.focus #tabs{display:none}
 body.focus #reader{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body.focus::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:rgba(20,24,26,.9);z-index:20}
+body.focus::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#14181a;z-index:20}
 #pop{position:fixed;z-index:9;display:flex;flex-direction:column;width:min(340px,calc(100vw - 16px));background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7);animation:pin .16s ease-out;color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:16px;box-shadow:0 10px 34px #0003;padding:12px 14px}
 @keyframes pin{from{opacity:0;transform:translateY(4px) scale(.98)}}
 #pw{flex:none;font:600 15px var(--serif);color:var(--mute);max-height:64px;overflow:auto}
@@ -123,8 +123,9 @@ dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}di
 const $=s=>document.querySelector(s);
 const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch{return d}};
 const SV=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-let cfg=Object.assign({src:'Autodetect',dst:'az',size:110,dark:false,theme:'',font:'serif',dim:0,margin:1},LS('cfg',{}));
+let cfg=Object.assign({src:'Autodetect',dst:'az',size:110,dark:false,theme:'',font:'serif',dim:0,margin:0},LS('cfg',{}));
 if(!cfg.theme)cfg.theme=cfg.dark?'dark':'light';
+if(!cfg.mv){cfg.margin=0;cfg.mv=1;SV('cfg',cfg)}
 let dict=LS('dict',[]);
 const FONTS={serif:'Charter,"Iowan Old Style",Georgia,serif',georgia:'Georgia,"Times New Roman",serif',sans:'-apple-system,"SF Pro Text",Inter,system-ui,sans-serif',mono:'"SF Mono",Menlo,Courier,monospace'},FN={serif:'Charter (serif)',georgia:'Georgia',sans:'Sans-serif (Inter / SF)',mono:'Courier (mono)'};
 const THEMES=[['light','Açıq'],['sepia','Sepia (isti krem)'],['dark','Tünd boz'],['black','Gecə (qara)']];
@@ -325,7 +326,7 @@ function applyTheme(){
 function applyDim(){$('#dim').style.opacity=(cfg.dim||0)/100}
 /* ---------- sürətli görünüş menyusu (Aa) ---------- */
 const qp=$('#qp');
-const MX=[30,44,64],TD={light:'#fff',sepia:'#e9d9b8',dark:'#14181a',black:'#000'};
+const MX=[18,34,56],TD={light:'#fff',sepia:'#e9d9b8',dark:'#14181a',black:'#000'};
 function renderQp(){
  $('#rBri').value=100-(cfg.dim||0);$('#rSize').value=cfg.size;
  $('#qTh').innerHTML=THEMES.map(t=>`<button class="chip${cfg.theme===t[0]?' on':''}" data-t="${t[0]}"><span class="dot" style="background:${TD[t[0]]}"></span>${t[1].split(' ')[0]}</button>`).join('');
@@ -404,7 +405,6 @@ function show(anchor){
  showPop(txt,union(selRects(c,w[anchor].s,w[anchor].e)),null,c.text.slice(st,en).trim());
 }
 function tap(e){
- const z=36;if(e.clientX<z||e.clientX>innerWidth-z){hidePop();e.clientX<z?prev():next();return}   /* sol/sağ kənar zolağa toxunuş → vərəq */
  const h=pick(e.clientX,e.clientY);
  if(!h){if(ps)hidePop();else document.body.classList.toggle('focus');return}                       /* boş yerə klik → açıq tərcümə bağlanır */
  if(ps&&S&&S.unit===h.unit){                           /* eyni abzasda başqa sözə toxun → aradakı hamısı seçilir */
