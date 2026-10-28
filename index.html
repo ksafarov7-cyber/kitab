@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="az"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14181a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="Oxu"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
+<meta name="theme-color" content="#14181a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Oxu"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
 <title>Oxu</title>
 <style>
 :root{--glass:#ffffff;--bg:#eef1ec;--panel:#fff;--ink:#1b2420;--mute:#6b7771;--line:#d3dad4;--acc:#1f6f5c;--mark:#f2c14e;--serif:Charter,'Iowan Old Style','Palatino Linotype',Georgia,serif}
@@ -111,18 +111,81 @@ dialog::backdrop{background:rgba(0,0,0,.35);}
 dialog{background:var(--glass);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:min(320px,90vw)}
 dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}dialog select{width:100%;border-color:var(--line);background:var(--panel)}
 .empty{color:var(--mute);padding:24px 0}
+
+/* ===== YENİ DİZAYN: mürəkkəb, kağız və bir qram elektrik rəngi ===== */
+:root{--bg:#f3f4f6;--panel:#fff;--ink:#101114;--mute:#6b707b;--line:#dcdfe5;--acc:#2f3cff;--onacc:#fff;--mark:#ffe14d;--glass:#fff;
+ --serif:"New York","Iowan Old Style","Palatino Linotype",Georgia,serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+html.sepia,body.sepia{--bg:#efe5cf;--panel:#f7efdc;--ink:#35291a;--mute:#8a7860;--line:#dccfae;--acc:#a1580f;--onacc:#fff;--glass:#f7efdc}
+html.dark,body.dark{--bg:#0f1115;--panel:#181b21;--ink:#eceef2;--mute:#8c93a1;--line:#272b34;--acc:#b8ff4d;--onacc:#0f1115;--glass:#181b21}
+html.black,body.black{--bg:#000;--panel:#0d0d0e;--ink:#d9dce2;--mute:#7d8390;--line:#202126;--acc:#b8ff4d;--onacc:#000;--glass:#0d0d0e}
+html,body{background:var(--bg)}
+body{color:var(--ink);padding-top:env(safe-area-inset-top,0px)}
+.fill{background:var(--acc);color:var(--onacc);border-color:var(--acc);box-shadow:none}.fill:hover,.fill:active{background:var(--acc);color:var(--onacc)}
+section{inset:0 0 calc(88px + env(safe-area-inset-bottom,0px)) 0}
+body.focus section{bottom:0}body.focus #reader{padding:0}body.focus #rtop{display:none}body.focus #pbar{top:0}
+/* alt naviqasiya: üzən kapsul */
+#tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:min(400px,calc(100% - 28px));padding:6px;border:1px solid #2b2f38;border-radius:30px;background:#14161b;box-shadow:0 14px 34px -8px #000a;z-index:6}
+#tabs button{border-radius:24px;color:#8f96a3;padding:8px 2px;gap:3px;font:600 10px var(--mono);letter-spacing:.04em;text-transform:uppercase}
+#tabs svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#tabs i{font:600 17px/21px var(--serif);font-style:normal;color:inherit}
+#tabs button.on,#tabs button.on i{color:#fff}#tabs button.on{background:#262a33}#cnt{color:#b8ff4d;font-weight:700}
+/* kitabxana */
+#lib{max-width:720px;padding:20px 20px 30px}
+#lib h2{font:700 46px/1 var(--serif);letter-spacing:-.02em;margin:8px 0 8px}
+#lib p{font:11px/1.5 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin:0 0 20px}
+#bAdd{border-radius:999px;padding:12px 22px;font-weight:600}
+#stats{display:flex;gap:26px;overflow-x:auto;margin:24px 0 8px;padding:0 0 4px}
+#stats div{background:none;border:0;padding:0;text-align:left;flex:none}
+#stats b{display:block;font:600 24px var(--serif)}#stats span{font:10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+#lq{border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:12px 0;font-size:17px;margin-top:6px}
+#lctl{margin:12px 0 6px}#lf{gap:18px}
+#lf .chip{border:0;border-radius:0;background:none;padding:6px 0;color:var(--mute);font:600 12px var(--mono);letter-spacing:.05em;text-transform:uppercase;border-bottom:2px solid transparent;box-shadow:none}
+#lf .chip.on{color:var(--ink);border-bottom-color:var(--acc)}
+#ls{border:0;background:none;color:var(--mute);font:11px var(--mono);text-transform:uppercase;letter-spacing:.05em}
+#books{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 16px;margin-top:14px}
+@media(min-width:620px){#books{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#books .empty{grid-column:1/-1}
+.book{position:relative;display:block;padding:0;border:0}
+.book .cv{width:100%;height:auto;aspect-ratio:2/3;border-radius:6px;box-shadow:0 14px 26px -12px #0007,0 0 0 1px #0000000f;margin-bottom:10px}
+.ph b{font-size:44px}
+.book .t{display:block}.book .nm{font:600 16px/1.25 var(--serif)}
+.book small{display:block;font:11px/1.5 var(--mono);color:var(--mute);margin-top:3px}
+.book>button{position:absolute;top:8px;right:8px;width:28px;height:28px;padding:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px;border:0}
+.book .act{margin-top:8px}.book .act button{border-radius:999px}
+.mini{height:2px;margin:8px 0 2px}
+#cont .cc{border:0;background:var(--ink);color:var(--bg);border-radius:22px;padding:16px;gap:16px}
+#cont .cv{width:88px;height:130px}#cont .nm2{font:700 21px/1.2 var(--serif)}
+#cont small{color:inherit;opacity:.65;font:11px var(--mono);letter-spacing:.04em;text-transform:uppercase}
+#cont .mini{background:rgba(127,127,127,.35)}#cont .mini i{background:currentColor}
+#cont .fill{background:var(--bg);color:var(--ink);border-color:var(--bg);border-radius:999px}
+/* oxu ekranı */
+#rtop{flex:none;padding:10px 20px 6px;font:11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#title{display:block;overflow:hidden;text-overflow:ellipsis}
+#pbar{position:relative;flex:none;height:2px;background:var(--line);z-index:1}
+#bar{background:none;border:0;padding:4px 8px 6px;color:var(--mute)}
+#bPrev,#bNext{font-size:28px;padding:0 16px}
+#bTts{background:var(--ink);color:var(--bg);border-radius:999px;padding:6px 14px;font-size:12px}
+#prog{font:11px var(--mono);letter-spacing:.04em;text-transform:uppercase}
+/* tərcümə kartı */
+#pop{border-radius:14px;border:1px solid var(--line);border-left:5px solid var(--acc);background:var(--panel);box-shadow:0 18px 40px -12px #0008;padding:12px 14px}
+#pw{font:600 12px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
+#pt{font:22px/1.3 var(--serif)}#pm{font:12px/1.5 var(--mono)}#pa button{border-radius:999px}
+.seg button.on{background:var(--ink);color:var(--bg)}
 </style></head><body>
-<header><h1 id="title">Oxu</h1>
-</header>
 <main>
  <section id="lib"><h2>Kitabxana</h2><p>PDF, EPUB və TXT faylları. Kitablar yalnız bu cihazda saxlanılır.</p>
   <button class="fill" id="bAdd">+ Kitab əlavə et</button><input type="file" id="file" accept=".pdf,.epub,.txt" multiple hidden>
   <div id="cont"></div><div id="stats"></div><input id="lq" type="search" placeholder="Kitab axtar…"><div id="lctl"><div id="lf"><button class="chip" data-f="all">Hamısı</button><button class="chip" data-f="reading">Oxunur</button><button class="chip" data-f="done">Bitirilib</button></div><select id="ls"><option value="recent">Son oxunan</option><option value="name">Ada görə</option><option value="added">Əlavə tarixi</option><option value="status">Oxunma vəziyyəti</option></select></div><div id="books"></div></section>
- <section id="reader" hidden><div id="pbar"><i></i></div><div id="stage"><div id="epubView" hidden></div><div id="pdfView" hidden></div><div id="txtView" hidden></div></div>
-  <div id="bar"><button id="bPrev" aria-label="Əvvəlki">‹</button><button id="bTts" title="Ucadan oxu">🎧</button><span id="prog"></span><button id="bRate" title="Oxuma sürəti">1×</button><button id="bNext" aria-label="Növbəti">›</button></div></section>
+ <section id="reader" hidden><div id="rtop"><span id="title"></span></div><div id="pbar"><i></i></div><div id="stage"><div id="epubView" hidden></div><div id="pdfView" hidden></div><div id="txtView" hidden></div></div>
+  <div id="bar"><button id="bPrev" aria-label="Əvvəlki">‹</button><button id="bTts" title="Ucadan oxu">▶</button><span id="prog"></span><button id="bRate" title="Oxuma sürəti">1×</button><button id="bNext" aria-label="Növbəti">›</button></div></section>
  <section id="dict" hidden></section>
 </main>
-<nav id="tabs"><button id="bBack"><i>📚</i><span>Kitabxana</span></button><button id="bAa"><i>Aa</i><span>Görünüş</span></button><button id="bDict"><i>★</i><span>Lüğət <b id="cnt">0</b></span></button><button id="bSet"><i>⚙</i><span>Dillər</span></button></nav>
+<nav id="tabs">
+ <button id="bBack"><svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"/></svg><span>Kitablar</span></button>
+ <button id="bAa"><i>Aa</i><span>Görünüş</span></button>
+ <button id="bDict"><svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg><span>Lüğət <b id="cnt">0</b></span></button>
+ <button id="bSet"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.2 2.5 13.8 0 16M12 4c-2.5 2.2-2.5 13.8 0 16"/></svg><span>Dillər</span></button>
+</nav>
 <div id="dim"></div>
 <div id="qp" hidden>
  <div class="qh"><button id="qx" aria-label="Bağla">✕</button><b>Oxu ayarları</b></div>
@@ -200,7 +263,7 @@ async function renderLib(){
  const list=all.filter(b=>b.name.toLowerCase().includes(libQ)).filter(b=>libF==='all'||(libF==='reading'?(prg(b)>0&&prg(b)<.97):prg(b)>=.97)).sort(srt[libS]||srt.recent);
  $('#books').innerHTML=list.length?'':'<div class="empty">'+(all.length?'Bu filtrə uyğun kitab yoxdur.':'Hələ kitab yoxdur. Yuxarıdakı düymə ilə fayl seç.')+'</div>';
  list.forEach(b=>{const pk=packIdx[b.id],d=document.createElement('div'),p=Math.round(prg(b)*100);d.className='book';
-  d.innerHTML=`<div class="cv" data-cv="${b.id}">${coverHtml(b)}</div><div class="t"><div class="nm">${esc(b.name)}</div><small>${meta(b)}${pk?' · Oflayn: '+pk.n+' söz ('+(pk.src==='Autodetect'?'avto':pk.src)+'→'+pk.dst+')'+(pk.partial?' · natamam':''):''}</small>${p>0?`<div class="mini"><i style="width:${p}%"></i></div>`:''}<div class="act"></div></div><button title="Kitabı sil">🗑</button>`;
+  d.innerHTML=`<div class="cv" data-cv="${b.id}">${coverHtml(b)}</div><div class="t"><div class="nm">${esc(b.name)}</div><small>${meta(b)}${pk?' · Oflayn: '+pk.n+' söz ('+(pk.src==='Autodetect'?'avto':pk.src)+'→'+pk.dst+')'+(pk.partial?' · natamam':''):''}</small>${p>0?`<div class="mini"><i style="width:${p}%"></i></div>`:''}<div class="act"></div></div><button title="Kitabı sil">✕</button>`;
   d.querySelector('.nm').onclick=d.querySelector('.cv').onclick=()=>openBook(b);
   const act=d.querySelector('.act'),btn=(t,f,dis)=>{const x=document.createElement('button');x.textContent=t;x.onclick=f;x.disabled=!!dis;act.append(x)};
   if(job&&job.id===b.id){const sp=document.createElement('span');sp.className='jp';sp.textContent=job.txt;act.append(sp,' ');btn('Dayandır',()=>{job.stop=true})}
@@ -336,7 +399,8 @@ const keyNav=e=>{if(e.key==='ArrowRight'||e.key==='PageDown')next();if(e.key==='
 document.addEventListener('keydown',keyNav);
 function applySize(){if(!cur)return;if(cur.type==='epub')themeEpub();else if(cur.type==='pdf')renderPdf();else $('#txtView').style.fontSize=cfg.size/110*20+'px'}
 function applyTheme(){
- const b=document.body;b.classList.remove('dark','sepia','black');if(cfg.theme!=='light')b.classList.add(cfg.theme);
+ for(const e of [document.body,document.documentElement]){e.classList.remove('dark','sepia','black');if(cfg.theme!=='light')e.classList.add(cfg.theme)}
+ document.querySelector('meta[name=theme-color]').content=getComputedStyle(document.body).getPropertyValue('--bg').trim()||'#f3f4f6';
  document.documentElement.style.setProperty('--read',FONTS[cfg.font]||FONTS.serif);applyDim();document.documentElement.style.setProperty('--mx',MX[cfg.margin==null?1:cfg.margin]+'px');themeEpub()}
 function applyDim(){const o=(cfg.dim||0)/100,d=$('#dim');d.style.opacity=o;d.style.display=o?'block':'none'}
 /* ---------- sürətli görünüş menyusu (Aa) ---------- */
@@ -687,7 +751,7 @@ async function ttsRun(id){
   await sleep(250)}
  if(tts&&tts.id===id)ttsStop();
 }
-function ttsStop(){document.querySelectorAll('.tts').forEach(e=>e.classList.remove('tts'));tts=null;speechSynthesis.cancel();const b=$('#bTts');if(b)b.textContent='🎧'}
+function ttsStop(){document.querySelectorAll('.tts').forEach(e=>e.classList.remove('tts'));tts=null;speechSynthesis.cancel();const b=$('#bTts');if(b)b.textContent='▶'}
 $('#bTts').onclick=()=>{if(!cur)return;if(tts){ttsStop();return}hidePop();tts={id:Date.now()};$('#bTts').textContent='■';ttsRun(tts.id)};
 $('#bRate').onclick=()=>{rIdx=(rIdx+1)%RATES.length;$('#bRate').textContent=RATES[rIdx]+'×'};
 /* ---------- oxuma vaxtı ---------- */
