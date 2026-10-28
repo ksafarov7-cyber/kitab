@@ -22,7 +22,7 @@ button{transition:transform .12s ease,background .18s,opacity .18s;-webkit-tap-h
 button:active{transform:scale(.94);background:rgba(127,127,127,.18)}.fill:active{background:var(--acc);opacity:.85}
 .fill{box-shadow:0 1px 3px #0003}#pa button{border-radius:12px}
 input[type=search]{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;width:100%;-webkit-appearance:none}
-#pbar{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(127,127,127,.18);z-index:4;pointer-events:none}
+#pbar{position:absolute;top:0;left:0;right:0;height:2px;background:var(--line);z-index:4;pointer-events:none}
 #pbar i{display:block;height:100%;width:0;background:var(--acc);transition:width .25s ease;border-radius:0 3px 3px 0}
 body.focus #pbar{top:env(safe-area-inset-top,0px)}
 #stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}
@@ -59,6 +59,8 @@ header h1{text-align:center}
 .chip{border:1px solid var(--line);background:var(--panel);padding:6px 12px;font-size:14px}.chip.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
 .th-light{background:#eef1ec;color:#1b2420}.th-sepia{background:#f4ecd8;color:#433422}.th-dark{background:#14181a;color:#e4ebe5}.th-black{background:#000;color:#d8dcd9}
 #dlgT:focus{outline:none}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#14181a;z-index:30;pointer-events:none}
+#epubView,#txtView{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
 #lib{padding:20px;max-width:760px;margin:auto}
 #lib h2{font:600 28px var(--serif);margin:8px 0 4px}#lib p{color:var(--mute);margin:0 0 18px}
@@ -323,7 +325,7 @@ function applySize(){if(!cur)return;if(cur.type==='epub')themeEpub();else if(cur
 function applyTheme(){
  const b=document.body;b.classList.remove('dark','sepia','black');if(cfg.theme!=='light')b.classList.add(cfg.theme);
  document.documentElement.style.setProperty('--read',FONTS[cfg.font]||FONTS.serif);applyDim();document.documentElement.style.setProperty('--mx',MX[cfg.margin==null?1:cfg.margin]+'px');themeEpub()}
-function applyDim(){$('#dim').style.opacity=(cfg.dim||0)/100}
+function applyDim(){const o=(cfg.dim||0)/100,d=$('#dim');d.style.opacity=o;d.style.display=o?'block':'none'}
 /* ---------- sürətli görünüş menyusu (Aa) ---------- */
 const qp=$('#qp');
 const MX=[18,34,56],TD={light:'#fff',sepia:'#e9d9b8',dark:'#14181a',black:'#000'};
