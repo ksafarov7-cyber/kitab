@@ -21,6 +21,19 @@ main{flex:1;min-height:0;position:relative}
 button{transition:transform .12s ease,background .18s,opacity .18s;-webkit-tap-highlight-color:transparent;border-radius:11px}
 button:active{transform:scale(.94);background:rgba(127,127,127,.18)}.fill:active{background:var(--acc);opacity:.85}
 .fill{box-shadow:0 1px 3px #0003}#pa button{border-radius:12px}
+input[type=search]{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;width:100%;-webkit-appearance:none}
+#pbar{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(127,127,127,.18);z-index:4;pointer-events:none}
+#pbar i{display:block;height:100%;width:0;background:var(--acc);transition:width .25s ease;border-radius:0 3px 3px 0}
+body.focus #pbar{top:env(safe-area-inset-top,0px)}
+#stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}
+#stats div{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+#stats b{display:block;font:600 19px var(--serif)}#stats span{color:var(--mute);font-size:12px}
+.dbar{display:flex;gap:8px;margin-bottom:10px;align-items:center}.dbar input{flex:1}
+.fc{text-align:center;padding:36px 8px}.fc .cn,.fc .fs{color:var(--mute);font-size:13px}.fw{font:600 34px var(--serif);margin:18px 0;overflow-wrap:anywhere}
+.ft{font:24px var(--serif);color:var(--acc);margin-bottom:10px}.fc i{display:block;color:var(--mute);margin:8px auto;max-width:520px}
+.fb{display:flex;gap:10px;justify-content:center;margin:22px 0}.fc button{padding:10px 18px;font-size:16px;border-color:var(--line)}
+.tts{background:rgba(242,193,78,.3);border-radius:4px}
+#bPrev,#bNext{font-size:24px;line-height:1;padding:4px 16px}#prog{min-width:96px;text-align:center}
 section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
 #lib{padding:20px;max-width:760px;margin:auto}
 #lib h2{font:600 28px var(--serif);margin:8px 0 4px}#lib p{color:var(--mute);margin:0 0 18px}
@@ -67,9 +80,9 @@ dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}di
 <main>
  <section id="lib"><h2>Kitabxana</h2><p>PDF, EPUB və TXT faylları. Kitablar yalnız bu cihazda saxlanılır.</p>
   <button class="fill" id="bAdd">+ Kitab əlavə et</button><input type="file" id="file" accept=".pdf,.epub,.txt" multiple hidden>
-  <div id="books"></div></section>
- <section id="reader" hidden><div id="stage"><div id="epubView" hidden></div><div id="pdfView" hidden></div><div id="txtView" hidden></div></div>
-  <div id="bar"><button id="bPrev">‹ Əvvəlki</button><span id="prog"></span><button id="bNext">Növbəti ›</button></div></section>
+  <input id="lq" type="search" placeholder="Kitab axtar…" style="margin-top:14px"><div id="stats"></div><div id="books"></div></section>
+ <section id="reader" hidden><div id="pbar"><i></i></div><div id="stage"><div id="epubView" hidden></div><div id="pdfView" hidden></div><div id="txtView" hidden></div></div>
+  <div id="bar"><button id="bPrev" aria-label="Əvvəlki">‹</button><button id="bTts" title="Ucadan oxu">🎧</button><span id="prog"></span><button id="bRate" title="Oxuma sürəti">1×</button><button id="bNext" aria-label="Növbəti">›</button></div></section>
  <section id="dict" hidden></section>
 </main>
 <div id="pop" hidden><div id="pw"></div><div id="pt"></div><div id="pm"></div><div id="pa"><button id="pStar" class="fill">☆ Lüğətə əlavə et</button><button id="pSay" title="Səsləndir">🔊</button><button id="pX">✕</button></div></div>
@@ -96,11 +109,21 @@ async function loadPacks(){try{(await tx('readonly',x=>x.getAll(),'packs')).forE
 
 /* ---------- views ---------- */
 function view(n){['lib','reader','dict'].forEach(v=>$('#'+v).hidden=v!==n);hidePop();if(n!=='reader'){$('#title').textContent='Oxu';document.body.classList.remove('focus')}}
+let libQ='';
+const fmt=sec=>{const m=Math.round(sec/60);return m<60?m+' dəq':Math.floor(m/60)+' s '+(m%60)+' dəq'};
+const today=()=>'day:'+new Date().toLocaleDateString('sv');
+function meta(b){const p=LS('prg:'+b.id,0),t=LS('time:'+b.id,0),a=[(b.blob.size/1048576).toFixed(1)+' MB'];
+ if(p>0)a.push(Math.round(p*100)+'%');if(t>=60)a.push('oxuma: '+fmt(t));if(t>=300&&p>.02&&p<.97)a.push('qalan ≈ '+fmt(t*(1-p)/p));return a.join(' · ')}
+function renderStats(list){
+ let tot=0;list.forEach(b=>tot+=LS('time:'+b.id,0));
+ $('#stats').innerHTML=[[list.length,'kitab'],[list.filter(b=>LS('prg:'+b.id,0)>=.97).length,'oxunub'],[dict.length,'söz lüğətdə'],
+  [dict.filter(x=>(x.box||0)>=3).length,'öyrənilib'],[fmt(LS(today(),0)),'bu gün'],[fmt(tot),'ümumi vaxt']].map(([a,b])=>`<div><b>${a}</b><span>${b}</span></div>`).join('')}
 async function renderLib(){
- const list=(await tx('readonly',s=>s.getAll())).sort((a,b)=>b.added-a.added);
+ const all=(await tx('readonly',s=>s.getAll())).sort((a,b)=>b.added-a.added);renderStats(all);
+ const list=all.filter(b=>b.name.toLowerCase().includes(libQ));
  $('#books').innerHTML=list.length?'':'<div class="empty">Hələ kitab yoxdur. Yuxarıdakı düymə ilə fayl seç.</div>';
  list.forEach(b=>{const pk=packIdx[b.id],d=document.createElement('div');d.className='book';
-  d.innerHTML=`<span class="ext">${b.type.toUpperCase()}</span><div class="t"><div class="nm">${esc(b.name)}</div><small>${(b.blob.size/1048576).toFixed(1)} MB${pk?' · Oflayn: '+pk.n+' söz ('+(pk.src==='Autodetect'?'avto':pk.src)+'→'+pk.dst+')'+(pk.partial?' · natamam':''):''}</small><div class="act"></div></div><button title="Kitabı sil">🗑</button>`;
+  d.innerHTML=`<span class="ext">${b.type.toUpperCase()}</span><div class="t"><div class="nm">${esc(b.name)}</div><small>${meta(b)}${pk?' · Oflayn: '+pk.n+' söz ('+(pk.src==='Autodetect'?'avto':pk.src)+'→'+pk.dst+')'+(pk.partial?' · natamam':''):''}</small><div class="act"></div></div><button title="Kitabı sil">🗑</button>`;
   d.querySelector('.nm').onclick=()=>openBook(b);
   const act=d.querySelector('.act'),btn=(t,f,dis)=>{const x=document.createElement('button');x.textContent=t;x.onclick=f;x.disabled=!!dis;act.append(x)};
   if(job&&job.id===b.id){const sp=document.createElement('span');sp.className='jp';sp.textContent=job.txt;act.append(sp,' ');btn('Dayandır',()=>{job.stop=true})}
@@ -158,6 +181,7 @@ function packLookup(text){
  for(const p of Object.values(packIdx))if(p.dst===cfg.dst&&(p.src===cfg.src||p.src==='Autodetect'||cfg.src==='Autodetect')&&p.map[w])return p.map[w];
  return null}
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('#lq').oninput=e=>{libQ=e.target.value.trim().toLowerCase();renderLib()};
 $('#bAdd').onclick=()=>$('#file').click();
 $('#file').onchange=async e=>{
  for(const f of e.target.files){const ext=f.name.split('.').pop().toLowerCase();if(!['pdf','epub','txt'].includes(ext))continue;
@@ -167,14 +191,14 @@ $('#bBack').onclick=()=>{cleanup();view('lib');renderLib()};
 
 /* ---------- reader ---------- */
 let cur,rend,pdf,pg=1;
-function cleanup(){try{book&&book.destroy()}catch{}book=null;secs=[];pdf=null;['epubView','pdfView','txtView'].forEach(i=>{$('#'+i).innerHTML='';$('#'+i).hidden=true})}
+function cleanup(){ttsStop();try{book&&book.destroy()}catch{}book=null;secs=[];pdf=null;['epubView','pdfView','txtView'].forEach(i=>{$('#'+i).innerHTML='';$('#'+i).hidden=true})}
 async function openBook(b){
- cleanup();cur=b;view('reader');$('#title').textContent=b.name;$('#prog').textContent='';
+ cleanup();cur=b;view('reader');$('#pbar i').style.width=LS('prg:'+b.id,0)*100+'%';$('#title').textContent=b.name;$('#prog').textContent='';
  const el=$({epub:'#epubView',pdf:'#pdfView',txt:'#txtView'}[b.type]);el.hidden=false;
  try{
   if(b.type==='epub')await openEpub(b);
   else if(b.type==='pdf'){pdf=await pdfjsLib.getDocument({data:await b.blob.arrayBuffer()}).promise;pg=LS('pos:'+b.id,1);await renderPdf()}
-  else{el.innerHTML=(await b.blob.text()).split(/\r?\n/).filter(l=>l.trim()).map(l=>'<p>'+esc(l)+'</p>').join('');el.style.fontSize=cfg.size/110*20+'px';el.scrollTop=LS('pos:'+b.id,0);el.onscroll=()=>SV('pos:'+b.id,el.scrollTop)}
+  else{el.innerHTML=(await b.blob.text()).split(/\r?\n/).filter(l=>l.trim()).map(l=>'<p>'+esc(l)+'</p>').join('');el.style.fontSize=cfg.size/110*20+'px';el.scrollTop=LS('pos:'+b.id,0);el.onscroll=()=>{SV('pos:'+b.id,el.scrollTop);const q=el.scrollTop/Math.max(1,el.scrollHeight-el.clientHeight);setProg(q);$('#prog').textContent=Math.round(q*100)+'%'}}
  }catch(e){$('#prog').textContent='Fayl açılmadı: '+e.message}
 }
 /* ---------- kitabxanaları ehtiyatla yüklə (EPUB üçün) ---------- */
@@ -208,7 +232,9 @@ async function loadSec(i,y=0){
  v.innerHTML='';v.append(box);themeEpub();
  v.scrollTop=y==='end'?v.scrollHeight:y;progE();SV('pos:'+cur.id,{i:ci,y:v.scrollTop});
 }
-function progE(){const v=$('#epubView'),m=Math.max(1,v.scrollHeight-v.clientHeight);$('#prog').textContent='Fəsil '+(ci+1)+'/'+secs.length+' · '+Math.round((ci+Math.min(1,v.scrollTop/m))/secs.length*100)+'%'}
+const setProg=p=>{p=Math.max(0,Math.min(1,p||0));$('#pbar i').style.width=p*100+'%';if(cur)SV('prg:'+cur.id,p)};
+function progE(){const v=$('#epubView'),m=Math.max(1,v.scrollHeight-v.clientHeight),p=(ci+Math.min(1,v.scrollTop/m))/secs.length;
+ $('#prog').textContent='Fəsil '+(ci+1)+'/'+secs.length+' · '+Math.round(p*100)+'%';setProg(p)}
 function themeEpub(){const b=document.querySelector('.ebody');if(b)b.style.fontSize=cfg.size/110*20+'px'}
 function stepEpub(dir){const tx=cur.type==='txt',v=$(tx?'#txtView':'#epubView'),h=v.clientHeight*.9;
  if(dir>0){if(v.scrollTop+v.clientHeight<v.scrollHeight-6)v.scrollBy({top:h,behavior:'smooth'});else if(!tx)loadSec(ci+1)}
@@ -219,12 +245,12 @@ async function renderPdf(){
  const w=document.createElement('div');w.className='pg';w.style.width=vp.width+'px';w.style.height=vp.height+'px';
  const cv=document.createElement('canvas');cv.width=vp.width*dpr;cv.height=vp.height*dpr;cv.style.width=vp.width+'px';cv.style.height=vp.height+'px';
  const tl=document.createElement('div');tl.className='textLayer';w.append(cv,tl);v.append(w);v.scrollTop=0;
- $('#prog').textContent=pg+' / '+pdf.numPages;SV('pos:'+cur.id,pg);
+ $('#prog').textContent=pg+' / '+pdf.numPages;SV('pos:'+cur.id,pg);setProg(pg/pdf.numPages);
  await page.render({canvasContext:cv.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
  pdfjsLib.renderTextLayer({textContentSource:await page.getTextContent(),container:tl,viewport:vp,textDivs:[]});
 }
 const go=n=>{if(pdf&&pg+n>=1&&pg+n<=pdf.numPages){pg+=n;renderPdf()}};
-const next=()=>cur&&(cur.type==='pdf'?go(1):stepEpub(1)),prev=()=>cur&&(cur.type==='pdf'?go(-1):stepEpub(-1));
+const next=()=>{ttsStop();return cur&&(cur.type==='pdf'?go(1):stepEpub(1))},prev=()=>{ttsStop();return cur&&(cur.type==='pdf'?go(-1):stepEpub(-1))};
 $('#bNext').onclick=next;$('#bPrev').onclick=prev;
 const keyNav=e=>{if(e.key==='ArrowRight'||e.key==='PageDown')next();if(e.key==='ArrowLeft'||e.key==='PageUp')prev()};
 document.addEventListener('keydown',keyNav);
@@ -362,7 +388,7 @@ function showPop(text,rect,fr,ctx){
  ps={text,ctx,t:'',r:{l:rect.left+o.left,rt:rect.right+o.left,tp:rect.top+o.top,b:rect.bottom+o.top}};
  $('#pw').textContent=text;$('#pt').textContent='…';$('#pm').textContent='';$('#pop').hidden=false;starState();place();
  tr(text).then(r=>{if(!ps||ps.text!==text)return;
-  ps.t=r.t;ps.lang=r.src||(cfg.src!=='Autodetect'?cfg.src:'');$('#pt').textContent=r.t;const m=[];
+  ps.t=r.t;ps.lang=r.src||(cfg.src!=='Autodetect'?cfg.src:'');if(ps.lang)lastLang=ps.lang;$('#pt').textContent=r.t;const m=[];
   if(r.off)m.push('Oflayn (kitab paketi)');
   if(cfg.src==='Autodetect'&&r.src){const L=LANGS.find(l=>l[0]===r.src);m.push('Dil: '+(L?L[1]:r.src))}
   if(!/\s/.test(text)&&r.alts.length)m.push(r.alts.map(a=>a.pos+': '+a.w.join(', ')).join('\n'));
@@ -382,22 +408,45 @@ $('#pStar').onclick=()=>{if(!ps)return;const i=dict.findIndex(d=>key(d.w)===key(
  SV('dict',dict);starState();count()};
 $('#pX').onclick=hidePop;
 $('#pSay').onclick=()=>ps&&say(ps.text,ps.lang);
+let lastLang='';
+function pickVoice(l){const vs=speechSynthesis.getVoices(),n=v=>v.lang.replace('_','-').toLowerCase();
+ return vs.find(v=>n(v)===l.toLowerCase())||vs.find(v=>n(v).startsWith(l.toLowerCase().slice(0,2)))}
 function say(t,lang){
- const l=(lang||(cfg.src==='Autodetect'?'en':cfg.src)).replace('_','-'),u=new SpeechSynthesisUtterance(t);u.lang=l;
- const vs=speechSynthesis.getVoices(),norm=v=>v.lang.replace('_','-').toLowerCase();
- const v=vs.find(v=>norm(v)===l.toLowerCase())||vs.find(v=>norm(v).startsWith(l.toLowerCase().slice(0,2)));
- if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u)}
+ const l=(lang||(cfg.src==='Autodetect'?lastLang||'en':cfg.src)).replace('_','-');speechSynthesis.cancel();
+ chunk(t,280).forEach(c=>{const u=new SpeechSynthesisUtterance(c);u.lang=l;const v=pickVoice(l);if(v)u.voice=v;speechSynthesis.speak(u)})}
 const count=()=>$('#cnt').textContent=dict.length;
 
 /* ---------- dictionary ---------- */
 $('#bDict').onclick=()=>{view('dict');renderDict()};
+let dq='';
+const IV=[0,1,3,7,16,35],dueList=()=>dict.filter(x=>!x.due||x.due<=Date.now());
 function renderDict(){
  const d=$('#dict');d.innerHTML='<h2 style="font:600 28px var(--serif);margin:8px 0 12px">Lüğətim</h2>';
  if(!dict.length){d.innerHTML+='<div class="empty">Boşdur. Oxuyarkən sözə toxun və “Lüğətə əlavə et” düyməsini bas.</div>';return}
- const b=document.createElement('button');b.className='fill';b.textContent='CSV kimi yüklə (Anki üçün)';b.onclick=exportCsv;d.append(b);
- dict.forEach((x,i)=>{const r=document.createElement('div');r.className='row';
-  r.innerHTML=`<div><b>${esc(x.w)}</b> — ${esc(x.t||'')}${x.ctx?`<i>${esc(x.ctx)}</i>`:''}${x.book?`<i>${esc(x.book)}</i>`:''}</div><button title="Səsləndir">🔊</button><button title="Sil">🗑</button>`;
-  const [s,del]=r.querySelectorAll('button');s.onclick=()=>say(x.w,x.lang);del.onclick=()=>{dict.splice(i,1);SV('dict',dict);count();renderDict()};d.append(r)});
+ const bar=document.createElement('div');bar.className='dbar';
+ bar.innerHTML=`<input id="dq" type="search" placeholder="Lüğətdə axtar…" value="${esc(dq)}"><button class="fill" id="bLearn">Öyrən (${dueList().length})</button><button id="bCsv" title="Anki üçün CSV">CSV</button>`;
+ d.append(bar);const rows=document.createElement('div');d.append(rows);
+ $('#bLearn').onclick=learn;$('#bCsv').onclick=exportCsv;
+ const draw=()=>{rows.innerHTML='';const q=dq.toLowerCase();
+  dict.filter(x=>!q||(x.w+' '+(x.t||'')+' '+(x.ctx||'')).toLowerCase().includes(q)).forEach(x=>{const r=document.createElement('div');r.className='row';
+   r.innerHTML=`<div><b>${esc(x.w)}</b> — ${esc(x.t||'')}${x.ctx?`<i>${esc(x.ctx)}</i>`:''}${x.book?`<i>${esc(x.book)}</i>`:''}</div><button title="Səsləndir">🔊</button><button title="Sil">🗑</button>`;
+   const [sp,del]=r.querySelectorAll('button');sp.onclick=()=>say(x.w,x.lang);
+   del.onclick=()=>{dict.splice(dict.indexOf(x),1);SV('dict',dict);count();renderDict()};rows.append(r)})};
+ $('#dq').oninput=e=>{dq=e.target.value;draw()};draw();
+}
+function learn(){
+ const q=dueList().sort(()=>Math.random()-.5).slice(0,20),n0=q.length,miss=new Set();let ok=0;
+ if(!n0){alert('Bu gün təkrarlanacaq söz yoxdur 🎉');return}
+ const d=$('#dict'),step=flip=>{
+  if(!q.length){d.innerHTML=`<div class="fc"><div class="fw">Bitdi!</div><p>${ok} / ${n0} söz ilk cəhddə düzgün oldu.</p><button class="fill" id="bk">Lüğətə qayıt</button></div>`;$('#bk').onclick=renderDict;return}
+  const x=q[0];
+  d.innerHTML=`<div class="fc"><div class="cn">${n0-new Set(q).size+1} / ${n0}</div><div class="fw">${esc(x.w)}</div>${flip?`<div class="ft">${esc(x.t||'')}</div>${x.ctx?`<i>${esc(x.ctx)}</i>`:''}<div class="fb"><button id="no">✗ Bilmədim</button><button class="fill" id="yes">✓ Bildim</button></div>`:'<div class="fb"><button class="fill" id="show">Tərcüməni göstər</button></div>'}<div class="fs"><button id="sp">🔊</button> <button id="ex">Çıx</button></div></div>`;
+  $('#sp').onclick=()=>say(x.w,x.lang);$('#ex').onclick=renderDict;
+  if(!flip){$('#show').onclick=()=>step(true);return}
+  $('#yes').onclick=()=>{x.box=Math.min((x.box||0)+1,5);x.due=Date.now()+IV[x.box]*864e5;if(!miss.has(x))ok++;q.shift();SV('dict',dict);step(false)};
+  $('#no').onclick=()=>{miss.add(x);x.box=0;x.due=Date.now();q.push(q.shift());SV('dict',dict);step(false)};
+ };
+ step(false);
 }
 function exportCsv(){
  const q=s=>'"'+String(s||'').replace(/"/g,'""')+'"';
@@ -413,6 +462,41 @@ $('#sOk').onclick=()=>{cfg.src=$('#sSrc').value;cfg.dst=$('#sDst').value;cfg.fon
 
 ['#pdfView','#txtView'].forEach(q=>$(q).addEventListener('scroll',hidePop));
 bind($('#pdfView'),document,null,true);bind($('#txtView'),document,null,false);bind($('#epubView'),document,null,false);
+/* ---------- Ucadan oxu (player) ---------- */
+const RATES=[1,1.25,1.5,.8],sleep=ms=>new Promise(r=>setTimeout(r,ms));let tts=null,rIdx=0;
+function ttsItems(){
+ if(cur.type==='pdf'){const l=document.querySelector('#pdfView .textLayer');if(!l)return[];const t=build(l,true).text.replace(/\s+/g,' ').trim();return t?[{text:t}]:[]}
+ const root=cur.type==='epub'?document.querySelector('.ebody'):$('#txtView');if(!root)return[];
+ let els=[...root.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre')].filter(e=>!e.querySelector('p,li,h1,h2,h3,h4,h5,h6,blockquote,pre'));
+ if(!els.length)els=[root];
+ return els.map(el=>({el,text:el.textContent.replace(/\s+/g,' ').trim()})).filter(x=>x.text.length>1)}
+function firstVisible(items){if(cur.type==='pdf')return 0;const top=$(cur.type==='epub'?'#epubView':'#txtView').getBoundingClientRect().top+8;
+ return Math.max(0,items.findIndex(x=>x.el.getBoundingClientRect().bottom>top))}
+function speakOnce(t){return new Promise(res=>{const u=new SpeechSynthesisUtterance(t),l=(cfg.src!=='Autodetect'?cfg.src:lastLang||'en').replace('_','-');
+ u.lang=l;u.rate=RATES[rIdx];const v=pickVoice(l);if(v)u.voice=v;u.onend=u.onerror=()=>res();speechSynthesis.speak(u)})}
+async function ttsRun(id){
+ let first=true;
+ while(tts&&tts.id===id){
+  const items=ttsItems();if(!items.length)break;
+  for(let i=first?firstVisible(items):0;i<items.length;i++){
+   if(!tts||tts.id!==id)return;const it=items[i];
+   if(it.el){it.el.classList.add('tts');if(cur.type!=='pdf')it.el.scrollIntoView({block:'center',behavior:'smooth'})}
+   for(const c of chunk(it.text,280)){if(!tts||tts.id!==id)break;await speakOnce(c)}
+   if(it.el)it.el.classList.remove('tts')}
+  first=false;if(!tts||tts.id!==id)return;
+  if(cur.type==='pdf'){if(pg>=pdf.numPages)break;pg++;await renderPdf()}
+  else if(cur.type==='epub'){if(ci+1>=secs.length)break;await loadSec(ci+1)}else break;
+  await sleep(250)}
+ if(tts&&tts.id===id)ttsStop();
+}
+function ttsStop(){document.querySelectorAll('.tts').forEach(e=>e.classList.remove('tts'));tts=null;speechSynthesis.cancel();const b=$('#bTts');if(b)b.textContent='🎧'}
+$('#bTts').onclick=()=>{if(!cur)return;if(tts){ttsStop();return}hidePop();tts={id:Date.now()};$('#bTts').textContent='■';ttsRun(tts.id)};
+$('#bRate').onclick=()=>{rIdx=(rIdx+1)%RATES.length;$('#bRate').textContent=RATES[rIdx]+'×'};
+/* ---------- oxuma vaxtı ---------- */
+let lastAct=Date.now();['pointerdown','touchstart','keydown'].forEach(e=>document.addEventListener(e,()=>lastAct=Date.now(),{passive:true}));
+document.addEventListener('scroll',()=>lastAct=Date.now(),true);
+setInterval(()=>{if(!cur||$('#reader').hidden||document.hidden)return;if(Date.now()-lastAct>90000&&!tts)return;
+ const k='time:'+cur.id;SV(k,LS(k,0)+5);SV(today(),LS(today(),0)+5)},5000);
 /* ---------- swipe ilə vərəq çevirmə ---------- */
 function swipeBind(el){
  let x0=null,y0=0;
