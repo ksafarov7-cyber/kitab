@@ -34,6 +34,13 @@ body.focus #pbar{top:env(safe-area-inset-top,0px)}
 .fb{display:flex;gap:10px;justify-content:center;margin:22px 0}.fc button{padding:10px 18px;font-size:16px;border-color:var(--line)}
 .tts{background:rgba(242,193,78,.3);border-radius:4px}
 #bPrev,#bNext{font-size:24px;line-height:1;padding:4px 16px}#prog{min-width:96px;text-align:center}
+#dim{position:fixed;inset:0;background:#000;pointer-events:none;z-index:8;opacity:0;transition:opacity .15s}
+#qp{position:fixed;z-index:10;top:calc(env(safe-area-inset-top,0px) + 54px);right:8px;width:min(320px,calc(100vw - 16px));background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7);border:1px solid var(--line);border-radius:16px;padding:6px 14px 14px;box-shadow:0 10px 34px #0003;animation:pin .16s ease-out;color:var(--ink)}
+#qp label{display:block;color:var(--mute);font-size:13px;margin:10px 0 4px}#qp input[type=range]{width:100%;accent-color:var(--acc)}
+#qp .row2{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--panel);padding:6px 12px;font-size:14px}.chip.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.th-light{background:#eef1ec;color:#1b2420}.th-sepia{background:#f4ecd8;color:#433422}.th-dark{background:#14181a;color:#e4ebe5}.th-black{background:#000;color:#d8dcd9}
+#dlgT:focus{outline:none}
 section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
 #lib{padding:20px;max-width:760px;margin:auto}
 #lib h2{font:600 28px var(--serif);margin:8px 0 4px}#lib p{color:var(--mute);margin:0 0 18px}
@@ -44,12 +51,12 @@ section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
 #reader{display:flex;flex-direction:column}
 #stage{flex:1;min-height:0;position:relative}
 #epubView{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
-.ebody{max-width:700px;margin:0 auto;padding:24px 18px 90px;font:20px/1.7 var(--read,Georgia,serif);overflow-wrap:break-word}
+.ebody{max-width:700px;margin:0 auto;padding:24px 38px 90px;font:20px/1.7 var(--read,Georgia,serif);overflow-wrap:break-word}
 .ebody p{margin:0 0 .9em}.ebody h1,.ebody h2,.ebody h3{line-height:1.25}.ebody img,.ebody svg{max-width:100%;height:auto}.ebody a{color:inherit;text-decoration:none}
 #pdfView,#txtView{position:absolute;inset:0;overflow:auto}
 #epubView,#pdfView,#txtView{overscroll-behavior:contain;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #txtView p{margin:0 0 .8em}
-#txtView{white-space:pre-wrap;font:20px/1.7 var(--read,Georgia,serif);padding:24px max(16px,calc(50% - 360px))}
+#txtView{white-space:pre-wrap;font:20px/1.7 var(--read,Georgia,serif);padding:24px max(38px,calc(50% - 360px))}
 .pg{position:relative;margin:8px auto;background:#fff;box-shadow:0 1px 8px #0003}
 body.dark .pg canvas,body.black .pg canvas{filter:invert(.9) hue-rotate(180deg)}body.sepia .pg canvas{filter:sepia(.45) contrast(.95)}
 .textLayer{position:absolute;inset:0;line-height:1}.textLayer span{position:absolute;color:transparent;white-space:pre;transform-origin:0 0}
@@ -58,12 +65,12 @@ body.dark .pg canvas,body.black .pg canvas{filter:invert(.9) hue-rotate(180deg)}
 body.focus header,body.focus #bar{display:none}
 body.focus #reader{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body.focus::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:rgba(20,24,26,.9);z-index:20}
-#pop{position:fixed;z-index:9;width:min(340px,calc(100vw - 16px));background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7);animation:pin .16s ease-out;color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:16px;box-shadow:0 10px 34px #0003;padding:12px 14px}
+#pop{position:fixed;z-index:9;display:flex;flex-direction:column;width:min(340px,calc(100vw - 16px));background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7);animation:pin .16s ease-out;color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:16px;box-shadow:0 10px 34px #0003;padding:12px 14px}
 @keyframes pin{from{opacity:0;transform:translateY(4px) scale(.98)}}
-#pw{font:600 15px var(--serif);color:var(--mute);max-height:64px;overflow:auto}
-#pt{font:19px/1.35 var(--serif);margin:4px 0 8px;max-height:36vh;overflow:auto}
-#pm{font-size:13px;color:var(--mute);white-space:pre-line;margin:-2px 0 8px;max-height:20vh;overflow:auto}#pm:empty{display:none}
-#pa{display:flex;gap:4px}#pa button{border-color:var(--line);padding:5px 9px}
+#pw{flex:none;font:600 15px var(--serif);color:var(--mute);max-height:64px;overflow:auto}
+#pt{flex:1 1 auto;min-height:0;font:19px/1.35 var(--serif);margin:4px 0 8px;max-height:36vh;overflow:auto}
+#pm{flex:none;font-size:13px;color:var(--mute);white-space:pre-line;margin:-2px 0 8px;max-height:20vh;overflow:auto}#pm:empty{display:none}
+#pa{flex:none;display:flex;gap:4px}#pa button{border-color:var(--line);padding:5px 9px}
 #dict{padding:16px;max-width:760px;margin:auto}
 .row{padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:flex-start}
 .row div{flex:1}.row b{font:600 18px var(--serif)}.row i{display:block;color:var(--mute);font-size:13px;margin-top:2px}
@@ -74,8 +81,8 @@ dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}di
 </style></head><body>
 <header>
  <button id="bBack" title="Kitabxana">☰</button><h1 id="title">Oxu</h1>
- <button id="bMinus" title="Kiçilt">A−</button><button id="bPlus" title="Böyüt">A+</button>
- <button id="bTheme" title="Tünd/açıq">◐</button><button id="bDict" title="Lüğətim">★ <span id="cnt">0</span></button><button id="bSet" title="Tərcümə dilləri">⚙</button>
+ <button id="bAa" title="Görünüş">Aa</button>
+ <button id="bDict" title="Lüğətim">★ <span id="cnt">0</span></button><button id="bSet" title="Tərcümə dilləri">⚙</button>
 </header>
 <main>
  <section id="lib"><h2>Kitabxana</h2><p>PDF, EPUB və TXT faylları. Kitablar yalnız bu cihazda saxlanılır.</p>
@@ -85,15 +92,17 @@ dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}di
   <div id="bar"><button id="bPrev" aria-label="Əvvəlki">‹</button><button id="bTts" title="Ucadan oxu">🎧</button><span id="prog"></span><button id="bRate" title="Oxuma sürəti">1×</button><button id="bNext" aria-label="Növbəti">›</button></div></section>
  <section id="dict" hidden></section>
 </main>
+<div id="dim"></div>
+<div id="qp" hidden><label>Parlaqlıq (ekranı qaraltmaq)</label><input type="range" id="rDim" min="0" max="70"><label>Mətn ölçüsü</label><input type="range" id="rSize" min="70" max="220" step="10"><label>Fon</label><div class="row2" id="qTh"></div><label>Şrift</label><div class="row2" id="qFt"></div></div>
 <div id="pop" hidden><div id="pw"></div><div id="pt"></div><div id="pm"></div><div id="pa"><button id="pStar" class="fill">☆ Lüğətə əlavə et</button><button id="pSay" title="Səsləndir">🔊</button><button id="pX">✕</button></div></div>
-<dialog id="dlg"><b>Tərcümə dilləri</b><label>Oxuduğum dil</label><select id="sSrc"></select><label>Tərcümə olunacaq dil</label><select id="sDst"></select><label>Oxu şrifti (PDF-ə təsir etmir)</label><select id="sFont"></select><label>Tema</label><select id="sTheme"></select><p style="text-align:right;margin:16px 0 0"><button class="fill" id="sOk">Yadda saxla</button></p></dialog>
+<dialog id="dlg"><b id="dlgT" tabindex="-1" autofocus>Tərcümə dilləri</b><label>Oxuduğum dil</label><select id="sSrc"></select><label>Tərcümə olunacaq dil</label><select id="sDst"></select><label>Oxu şrifti (PDF-ə təsir etmir)</label><select id="sFont"></select><label>Tema</label><select id="sTheme"></select><p style="text-align:right;margin:16px 0 0"><button class="fill" id="sOk">Yadda saxla</button></p></dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch{return d}};
 const SV=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-let cfg=Object.assign({src:'Autodetect',dst:'az',size:110,dark:false,theme:'',font:'serif'},LS('cfg',{}));
+let cfg=Object.assign({src:'Autodetect',dst:'az',size:110,dark:false,theme:'',font:'serif',dim:0},LS('cfg',{}));
 if(!cfg.theme)cfg.theme=cfg.dark?'dark':'light';
 let dict=LS('dict',[]);
 const FONTS={serif:'Charter,"Iowan Old Style",Georgia,serif',georgia:'Georgia,"Times New Roman",serif',sans:'-apple-system,"SF Pro Text",Inter,system-ui,sans-serif',mono:'"SF Mono",Menlo,Courier,monospace'},FN={serif:'Charter (serif)',georgia:'Georgia',sans:'Sans-serif (Inter / SF)',mono:'Courier (mono)'};
@@ -255,12 +264,21 @@ $('#bNext').onclick=next;$('#bPrev').onclick=prev;
 const keyNav=e=>{if(e.key==='ArrowRight'||e.key==='PageDown')next();if(e.key==='ArrowLeft'||e.key==='PageUp')prev()};
 document.addEventListener('keydown',keyNav);
 function applySize(){if(!cur)return;if(cur.type==='epub')themeEpub();else if(cur.type==='pdf')renderPdf();else $('#txtView').style.fontSize=cfg.size/110*20+'px'}
-$('#bPlus').onclick=()=>{cfg.size=Math.min(220,cfg.size+10);SV('cfg',cfg);applySize()};
-$('#bMinus').onclick=()=>{cfg.size=Math.max(70,cfg.size-10);SV('cfg',cfg);applySize()};
 function applyTheme(){
  const b=document.body;b.classList.remove('dark','sepia','black');if(cfg.theme!=='light')b.classList.add(cfg.theme);
- document.documentElement.style.setProperty('--read',FONTS[cfg.font]||FONTS.serif);themeEpub()}
-$('#bTheme').onclick=()=>{const t=THEMES.map(x=>x[0]);cfg.theme=t[(t.indexOf(cfg.theme)+1)%t.length];SV('cfg',cfg);applyTheme()};
+ document.documentElement.style.setProperty('--read',FONTS[cfg.font]||FONTS.serif);applyDim();themeEpub()}
+function applyDim(){$('#dim').style.opacity=(cfg.dim||0)/100}
+/* ---------- sürətli görünüş menyusu (Aa) ---------- */
+const qp=$('#qp');
+function renderQp(){
+ $('#rDim').value=cfg.dim||0;$('#rSize').value=cfg.size;
+ $('#qTh').innerHTML=THEMES.map(t=>`<button class="chip th-${t[0]}${cfg.theme===t[0]?' on':''}" data-t="${t[0]}">${t[1].split(' ')[0]}</button>`).join('');
+ $('#qFt').innerHTML=Object.keys(FN).map(k=>`<button class="chip${cfg.font===k?' on':''}" data-f="${k}" style="font-family:${FONTS[k]}">${FN[k].split(' ')[0]}</button>`).join('')}
+$('#bAa').onclick=()=>{qp.hidden=!qp.hidden;if(!qp.hidden){hidePop();renderQp()}};
+qp.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.t)cfg.theme=b.dataset.t;if(b.dataset.f)cfg.font=b.dataset.f;SV('cfg',cfg);applyTheme();renderQp()});
+$('#rDim').oninput=e=>{cfg.dim=+e.target.value;SV('cfg',cfg);applyDim()};
+let szT;$('#rSize').oninput=e=>{cfg.size=+e.target.value;SV('cfg',cfg);clearTimeout(szT);szT=setTimeout(applySize,120)};
+document.addEventListener('pointerdown',e=>{if(!qp.hidden&&!e.target.closest('#qp,#bAa'))qp.hidden=true},true);
 
 /* ---------- tap / selection -> translate ---------- */
 function bind(target,d,fr,swipe){
@@ -328,6 +346,7 @@ function show(anchor){
  showPop(txt,union(selRects(c,w[anchor].s,w[anchor].e)),null,c.text.slice(st,en).trim());
 }
 function tap(e){
+ const z=36;if(e.clientX<z||e.clientX>innerWidth-z){hidePop();e.clientX<z?prev():next();return}   /* sol/sağ kənar zolağa toxunuş → vərəq */
  const h=pick(e.clientX,e.clientY);
  if(!h){if(ps)hidePop();else document.body.classList.toggle('focus');return}                       /* boş yerə klik → açıq tərcümə bağlanır */
  if(ps&&S&&S.unit===h.unit){                           /* eyni abzasda başqa sözə toxun → aradakı hamısı seçilir */
@@ -396,9 +415,12 @@ function showPop(text,rect,fr,ctx){
  .catch(()=>{if(ps&&ps.text===text){$('#pt').textContent=navigator.onLine?'Tərcümə alınmadı. Dilləri ⚙ ilə yoxla və ya bir az sonra yenə cəhd et.':'İnternet yoxdur. Bu söz oflayn paketlərdə, əvvəlki tərcümələrdə və lüğətdə yoxdur.'}});
 }
 function place(){
- const p=$('#pop'),w=p.offsetWidth,h=p.offsetHeight,r=ps.r;
- let l=Math.max(8,Math.min(innerWidth-w-8,(r.l+r.rt)/2-w/2)),t=r.tp-h-10;
- if(t<8)t=r.b+10;t=Math.max(8,Math.min(innerHeight-h-8,t));p.style.left=l+'px';p.style.top=t+'px';
+ const p=$('#pop'),r=ps.r,w=p.offsetWidth,topLim=document.body.classList.contains('focus')?24:62,botLim=innerHeight-12;
+ p.style.maxHeight='';let h=p.offsetHeight;
+ const above=r.tp-8-topLim,below=botLim-(r.b+8),up=above>=h||above>=below,room=Math.max(110,up?above:below);
+ if(h>room){p.style.maxHeight=room+'px';h=room}
+ const l=Math.max(8,Math.min(innerWidth-w-8,(r.l+r.rt)/2-w/2)),t=up?r.tp-8-h:r.b+8;
+ p.style.left=l+'px';p.style.top=Math.max(8,Math.min(innerHeight-h-8,t))+'px';
 }
 function hidePop(){$('#pop').hidden=true;ps=null;S=null;clearHL()}
 const key=s=>s.toLowerCase();
@@ -457,7 +479,7 @@ function exportCsv(){
 const fill=(el,skipAuto,val)=>{el.innerHTML=LANGS.filter(l=>!(skipAuto&&l[0]==='Autodetect')).map(l=>`<option value="${l[0]}"${l[0]===val?' selected':''}>${l[1]}</option>`).join('')};
 $('#bSet').onclick=()=>{fill($('#sSrc'),false,cfg.src);fill($('#sDst'),true,cfg.dst);
  $('#sFont').innerHTML=Object.keys(FN).map(k=>`<option value="${k}"${k===cfg.font?' selected':''}>${FN[k]}</option>`).join('');
- $('#sTheme').innerHTML=THEMES.map(t=>`<option value="${t[0]}"${t[0]===cfg.theme?' selected':''}>${t[1]}</option>`).join('');$('#dlg').showModal()};
+ $('#sTheme').innerHTML=THEMES.map(t=>`<option value="${t[0]}"${t[0]===cfg.theme?' selected':''}>${t[1]}</option>`).join('');$('#dlg').showModal();$('#dlgT').focus({preventScroll:true});setTimeout(()=>{const a=document.activeElement;if(a&&a.tagName==='SELECT')a.blur()},0)};
 $('#sOk').onclick=()=>{cfg.src=$('#sSrc').value;cfg.dst=$('#sDst').value;cfg.font=$('#sFont').value;cfg.theme=$('#sTheme').value;SV('cfg',cfg);applyTheme();$('#dlg').close()};
 
 ['#pdfView','#txtView'].forEach(q=>$(q).addEventListener('scroll',hidePop));
@@ -503,7 +525,7 @@ function swipeBind(el){
  el.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;
   if(x0<28||x0>innerWidth-28)e.preventDefault()},{passive:false});   /* kənardan başlayan jest Safari-nin geri jestinə getməsin */
  el.addEventListener('touchend',e=>{if(x0==null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;
-  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5){hidePop();dx<0?next():prev()}},{passive:true});
+  if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.2){hidePop();dx<0?next():prev()}},{passive:true});
 }
 ['#epubView','#pdfView','#txtView'].forEach(q=>swipeBind($(q)));
 history.pushState({o:1},'');addEventListener('popstate',()=>history.pushState({o:1},''));   /* geri swipe səhifədən çıxarmasın */
