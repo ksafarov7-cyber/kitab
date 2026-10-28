@@ -4,10 +4,10 @@
 <meta name="theme-color" content="#14181a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Oxu"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
 <title>Oxu</title>
 <style>
-:root{--glass:rgba(255,255,255,.8);--bg:#eef1ec;--panel:#fff;--ink:#1b2420;--mute:#6b7771;--line:#d3dad4;--acc:#1f6f5c;--mark:#f2c14e;--serif:Charter,'Iowan Old Style','Palatino Linotype',Georgia,serif}
-body.dark{--glass:rgba(29,35,38,.8);--bg:#14181a;--panel:#1d2326;--ink:#e4ebe5;--mute:#8d9a93;--line:#2c353a;--acc:#5fc2a5}
-body.sepia{--glass:rgba(250,243,226,.82);--bg:#f4ecd8;--panel:#fbf5e6;--ink:#433422;--mute:#8a7a62;--line:#e0d3b6;--acc:#8a5a1f}
-body.black{--glass:rgba(18,18,18,.78);--bg:#000;--panel:#111;--ink:#d8dcd9;--mute:#7f8a85;--line:#232323;--acc:#5fc2a5}
+:root{--glass:#ffffff;--bg:#eef1ec;--panel:#fff;--ink:#1b2420;--mute:#6b7771;--line:#d3dad4;--acc:#1f6f5c;--mark:#f2c14e;--serif:Charter,'Iowan Old Style','Palatino Linotype',Georgia,serif}
+body.dark{--glass:#1d2326;--bg:#14181a;--panel:#1d2326;--ink:#e4ebe5;--mute:#8d9a93;--line:#2c353a;--acc:#5fc2a5}
+body.sepia{--glass:#fbf5e6;--bg:#f4ecd8;--panel:#fbf5e6;--ink:#433422;--mute:#8a7a62;--line:#e0d3b6;--acc:#8a5a1f}
+body.black{--glass:#111111;--bg:#000;--panel:#111;--ink:#d8dcd9;--mute:#7f8a85;--line:#232323;--acc:#5fc2a5}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;overscroll-behavior:none}
 html{background:#14181a;overscroll-behavior:none}
@@ -85,7 +85,7 @@ body.dark .pg canvas,body.black .pg canvas{filter:invert(.9) hue-rotate(180deg)}
 body.focus header,body.focus #bar,body.focus #tabs{display:none}
 body.focus #reader{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body.focus::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#14181a;z-index:20}
-#pop{position:fixed;z-index:9;display:flex;flex-direction:column;width:min(340px,calc(100vw - 16px));background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7);animation:pin .16s ease-out;color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:16px;box-shadow:0 10px 34px #0003;padding:12px 14px}
+#pop{position:fixed;z-index:9;display:flex;flex-direction:column;width:min(340px,calc(100vw - 16px));background:var(--glass);animation:pin .16s ease-out;color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:16px;box-shadow:0 10px 34px #0003;padding:12px 14px}
 @keyframes pin{from{opacity:0;transform:translateY(4px) scale(.98)}}
 #pw{flex:none;font:600 15px var(--serif);color:var(--mute);max-height:64px;overflow:auto}
 #pt{flex:1 1 auto;min-height:0;font:19px/1.35 var(--serif);margin:4px 0 8px;max-height:36vh;overflow:auto}
@@ -94,8 +94,8 @@ body.focus::before{content:'';position:fixed;top:0;left:0;right:0;height:env(saf
 #dict{padding:16px;max-width:760px;margin:auto}
 .row{padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:flex-start}
 .row div{flex:1}.row b{font:600 18px var(--serif)}.row i{display:block;color:var(--mute);font-size:13px;margin-top:2px}
-dialog::backdrop{background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-dialog{background:var(--glass);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:min(320px,90vw)}
+dialog::backdrop{background:rgba(0,0,0,.35);}
+dialog{background:var(--glass);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:min(320px,90vw)}
 dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}dialog select{width:100%;border-color:var(--line);background:var(--panel)}
 .empty{color:var(--mute);padding:24px 0}
 </style></head><body>
