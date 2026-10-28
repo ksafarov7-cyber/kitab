@@ -1,19 +1,26 @@
 <!doctype html>
 <html lang="az"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14181a"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
+<meta name="theme-color" content="#14181a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Oxu"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
 <title>Oxu</title>
 <style>
-:root{--bg:#eef1ec;--panel:#fff;--ink:#1b2420;--mute:#6b7771;--line:#d3dad4;--acc:#1f6f5c;--mark:#f2c14e;--serif:Charter,'Iowan Old Style','Palatino Linotype',Georgia,serif}
-body.dark{--bg:#14181a;--panel:#1d2326;--ink:#e4ebe5;--mute:#8d9a93;--line:#2c353a;--acc:#5fc2a5}
+:root{--glass:rgba(255,255,255,.8);--bg:#eef1ec;--panel:#fff;--ink:#1b2420;--mute:#6b7771;--line:#d3dad4;--acc:#1f6f5c;--mark:#f2c14e;--serif:Charter,'Iowan Old Style','Palatino Linotype',Georgia,serif}
+body.dark{--glass:rgba(29,35,38,.8);--bg:#14181a;--panel:#1d2326;--ink:#e4ebe5;--mute:#8d9a93;--line:#2c353a;--acc:#5fc2a5}
+body.sepia{--glass:rgba(250,243,226,.82);--bg:#f4ecd8;--panel:#fbf5e6;--ink:#433422;--mute:#8a7a62;--line:#e0d3b6;--acc:#8a5a1f}
+body.black{--glass:rgba(18,18,18,.78);--bg:#000;--panel:#111;--ink:#d8dcd9;--mute:#7f8a85;--line:#232323;--acc:#5fc2a5}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-header{display:flex;align-items:center;gap:4px;padding:6px 10px;border-bottom:1px solid var(--line)}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;overscroll-behavior:none}
+html{background:#14181a;overscroll-behavior:none}
+header{display:flex;align-items:center;gap:4px;padding:6px 10px;padding-top:calc(env(safe-area-inset-top,0px) + 6px);background:rgba(20,24,26,.78);color:#e4ebe5;-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);position:relative;z-index:3}
+@media(hover:hover){header button:hover{background:#2a3338;border-color:#3a464c}}
 header h1{flex:1;margin:0;font:600 16px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 button,select{font:inherit;color:inherit;background:none;border:1px solid transparent;border-radius:8px;padding:6px 10px;cursor:pointer}
-button:hover{background:var(--panel);border-color:var(--line)}button:focus-visible,select:focus-visible{outline:2px solid var(--acc)}
+@media(hover:hover){button:hover{background:var(--panel);border-color:var(--line)}}button:focus-visible,select:focus-visible{outline:2px solid var(--acc)}
 .fill{background:var(--acc);color:#fff;border-color:var(--acc)}.fill:hover{background:var(--acc);opacity:.9}
 main{flex:1;min-height:0;position:relative}
+button{transition:transform .12s ease,background .18s,opacity .18s;-webkit-tap-highlight-color:transparent;border-radius:11px}
+button:active{transform:scale(.94);background:rgba(127,127,127,.18)}.fill:active{background:var(--acc);opacity:.85}
+.fill{box-shadow:0 1px 3px #0003}#pa button{border-radius:12px}
 section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
 #lib{padding:20px;max-width:760px;margin:auto}
 #lib h2{font:600 28px var(--serif);margin:8px 0 4px}#lib p{color:var(--mute);margin:0 0 18px}
@@ -24,18 +31,22 @@ section{position:absolute;inset:0;overflow:auto}[hidden]{display:none!important}
 #reader{display:flex;flex-direction:column}
 #stage{flex:1;min-height:0;position:relative}
 #epubView{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
-.ebody{max-width:700px;margin:0 auto;padding:24px 18px 90px;font:20px/1.7 var(--serif);overflow-wrap:break-word}
+.ebody{max-width:700px;margin:0 auto;padding:24px 18px 90px;font:20px/1.7 var(--read,Georgia,serif);overflow-wrap:break-word}
 .ebody p{margin:0 0 .9em}.ebody h1,.ebody h2,.ebody h3{line-height:1.25}.ebody img,.ebody svg{max-width:100%;height:auto}.ebody a{color:inherit;text-decoration:none}
 #pdfView,#txtView{position:absolute;inset:0;overflow:auto}
-#epubView,#pdfView,#txtView{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#epubView,#pdfView,#txtView{overscroll-behavior:contain;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #txtView p{margin:0 0 .8em}
-#txtView{white-space:pre-wrap;font:20px/1.7 var(--serif);padding:24px max(16px,calc(50% - 360px))}
+#txtView{white-space:pre-wrap;font:20px/1.7 var(--read,Georgia,serif);padding:24px max(16px,calc(50% - 360px))}
 .pg{position:relative;margin:8px auto;background:#fff;box-shadow:0 1px 8px #0003}
-body.dark .pg canvas{filter:invert(.9) hue-rotate(180deg)}
+body.dark .pg canvas,body.black .pg canvas{filter:invert(.9) hue-rotate(180deg)}body.sepia .pg canvas{filter:sepia(.45) contrast(.95)}
 .textLayer{position:absolute;inset:0;line-height:1}.textLayer span{position:absolute;color:transparent;white-space:pre;transform-origin:0 0}
 .textLayer ::selection{background:#f2c14e88}
-#bar{display:flex;align-items:center;justify-content:center;gap:12px;padding:6px;border-top:1px solid var(--line);color:var(--mute);font-size:13px}
-#pop{position:fixed;z-index:9;width:min(340px,calc(100vw - 16px));background:var(--panel);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:10px;box-shadow:0 8px 28px #0004;padding:10px 12px}
+#bar{background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);display:flex;align-items:center;justify-content:center;gap:12px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);color:var(--mute);font-size:13px}
+body.focus header,body.focus #bar{display:none}
+body.focus #reader{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body.focus::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:rgba(20,24,26,.9);z-index:20}
+#pop{position:fixed;z-index:9;width:min(340px,calc(100vw - 16px));background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7);animation:pin .16s ease-out;color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mark);border-radius:16px;box-shadow:0 10px 34px #0003;padding:12px 14px}
+@keyframes pin{from{opacity:0;transform:translateY(4px) scale(.98)}}
 #pw{font:600 15px var(--serif);color:var(--mute);max-height:64px;overflow:auto}
 #pt{font:19px/1.35 var(--serif);margin:4px 0 8px;max-height:36vh;overflow:auto}
 #pm{font-size:13px;color:var(--mute);white-space:pre-line;margin:-2px 0 8px;max-height:20vh;overflow:auto}#pm:empty{display:none}
@@ -43,7 +54,8 @@ body.dark .pg canvas{filter:invert(.9) hue-rotate(180deg)}
 #dict{padding:16px;max-width:760px;margin:auto}
 .row{padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:flex-start}
 .row div{flex:1}.row b{font:600 18px var(--serif)}.row i{display:block;color:var(--mute);font-size:13px;margin-top:2px}
-dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:min(320px,90vw)}
+dialog::backdrop{background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+dialog{background:var(--glass);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:min(320px,90vw)}
 dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}dialog select{width:100%;border-color:var(--line);background:var(--panel)}
 .empty{color:var(--mute);padding:24px 0}
 </style></head><body>
@@ -61,15 +73,18 @@ dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:13px}di
  <section id="dict" hidden></section>
 </main>
 <div id="pop" hidden><div id="pw"></div><div id="pt"></div><div id="pm"></div><div id="pa"><button id="pStar" class="fill">☆ Lüğətə əlavə et</button><button id="pSay" title="Səsləndir">🔊</button><button id="pX">✕</button></div></div>
-<dialog id="dlg"><b>Tərcümə dilləri</b><label>Oxuduğum dil</label><select id="sSrc"></select><label>Tərcümə olunacaq dil</label><select id="sDst"></select><p style="text-align:right;margin:16px 0 0"><button class="fill" id="sOk">Yadda saxla</button></p></dialog>
+<dialog id="dlg"><b>Tərcümə dilləri</b><label>Oxuduğum dil</label><select id="sSrc"></select><label>Tərcümə olunacaq dil</label><select id="sDst"></select><label>Oxu şrifti (PDF-ə təsir etmir)</label><select id="sFont"></select><label>Tema</label><select id="sTheme"></select><p style="text-align:right;margin:16px 0 0"><button class="fill" id="sOk">Yadda saxla</button></p></dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch{return d}};
 const SV=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-let cfg=Object.assign({src:'Autodetect',dst:'az',size:110,dark:false},LS('cfg',{}));
+let cfg=Object.assign({src:'Autodetect',dst:'az',size:110,dark:false,theme:'',font:'serif'},LS('cfg',{}));
+if(!cfg.theme)cfg.theme=cfg.dark?'dark':'light';
 let dict=LS('dict',[]);
+const FONTS={serif:'Charter,"Iowan Old Style",Georgia,serif',georgia:'Georgia,"Times New Roman",serif',sans:'-apple-system,"SF Pro Text",Inter,system-ui,sans-serif',mono:'"SF Mono",Menlo,Courier,monospace'},FN={serif:'Charter (serif)',georgia:'Georgia',sans:'Sans-serif (Inter / SF)',mono:'Courier (mono)'};
+const THEMES=[['light','Açıq'],['sepia','Sepia (isti krem)'],['dark','Tünd boz'],['black','Gecə (qara)']];
 const LANGS=[['Autodetect','Avtomatik'],['en','English'],['tr','Türkçe'],['ru','Русский'],['de','Deutsch'],['fr','Français'],['es','Español'],['it','Italiano'],['ar','العربية'],['az','Azərbaycanca']];
 if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -80,7 +95,7 @@ const packIdx={};
 async function loadPacks(){try{(await tx('readonly',x=>x.getAll(),'packs')).forEach(p=>packIdx[p.id]=p)}catch{}}
 
 /* ---------- views ---------- */
-function view(n){['lib','reader','dict'].forEach(v=>$('#'+v).hidden=v!==n);hidePop();if(n!=='reader')$('#title').textContent='Oxu'}
+function view(n){['lib','reader','dict'].forEach(v=>$('#'+v).hidden=v!==n);hidePop();if(n!=='reader'){$('#title').textContent='Oxu';document.body.classList.remove('focus')}}
 async function renderLib(){
  const list=(await tx('readonly',s=>s.getAll())).sort((a,b)=>b.added-a.added);
  $('#books').innerHTML=list.length?'':'<div class="empty">Hələ kitab yoxdur. Yuxarıdakı düymə ilə fayl seç.</div>';
@@ -195,9 +210,9 @@ async function loadSec(i,y=0){
 }
 function progE(){const v=$('#epubView'),m=Math.max(1,v.scrollHeight-v.clientHeight);$('#prog').textContent='Fəsil '+(ci+1)+'/'+secs.length+' · '+Math.round((ci+Math.min(1,v.scrollTop/m))/secs.length*100)+'%'}
 function themeEpub(){const b=document.querySelector('.ebody');if(b)b.style.fontSize=cfg.size/110*20+'px'}
-function stepEpub(dir){const v=$('#epubView'),h=v.clientHeight*.9;
- if(dir>0){if(v.scrollTop+v.clientHeight<v.scrollHeight-6)v.scrollBy({top:h,behavior:'smooth'});else loadSec(ci+1)}
- else{if(v.scrollTop>6)v.scrollBy({top:-h,behavior:'smooth'});else loadSec(ci-1,'end')}}
+function stepEpub(dir){const tx=cur.type==='txt',v=$(tx?'#txtView':'#epubView'),h=v.clientHeight*.9;
+ if(dir>0){if(v.scrollTop+v.clientHeight<v.scrollHeight-6)v.scrollBy({top:h,behavior:'smooth'});else if(!tx)loadSec(ci+1)}
+ else{if(v.scrollTop>6)v.scrollBy({top:-h,behavior:'smooth'});else if(!tx)loadSec(ci-1,'end')}}
 async function renderPdf(){
  hidePop();const v=$('#pdfView');v.innerHTML='';const page=await pdf.getPage(pg);
  const base=page.getViewport({scale:1}),scale=Math.min((v.clientWidth-16)/base.width,2.4)*cfg.size/110,vp=page.getViewport({scale}),dpr=devicePixelRatio||1;
@@ -209,15 +224,17 @@ async function renderPdf(){
  pdfjsLib.renderTextLayer({textContentSource:await page.getTextContent(),container:tl,viewport:vp,textDivs:[]});
 }
 const go=n=>{if(pdf&&pg+n>=1&&pg+n<=pdf.numPages){pg+=n;renderPdf()}};
-const next=()=>cur&&(cur.type==='epub'?stepEpub(1):go(1)),prev=()=>cur&&(cur.type==='epub'?stepEpub(-1):go(-1));
+const next=()=>cur&&(cur.type==='pdf'?go(1):stepEpub(1)),prev=()=>cur&&(cur.type==='pdf'?go(-1):stepEpub(-1));
 $('#bNext').onclick=next;$('#bPrev').onclick=prev;
 const keyNav=e=>{if(e.key==='ArrowRight'||e.key==='PageDown')next();if(e.key==='ArrowLeft'||e.key==='PageUp')prev()};
 document.addEventListener('keydown',keyNav);
 function applySize(){if(!cur)return;if(cur.type==='epub')themeEpub();else if(cur.type==='pdf')renderPdf();else $('#txtView').style.fontSize=cfg.size/110*20+'px'}
 $('#bPlus').onclick=()=>{cfg.size=Math.min(220,cfg.size+10);SV('cfg',cfg);applySize()};
 $('#bMinus').onclick=()=>{cfg.size=Math.max(70,cfg.size-10);SV('cfg',cfg);applySize()};
-function applyTheme(){document.body.classList.toggle('dark',cfg.dark);document.querySelector('meta[name=theme-color]').content=cfg.dark?'#14181a':'#eef1ec';themeEpub()}
-$('#bTheme').onclick=()=>{cfg.dark=!cfg.dark;SV('cfg',cfg);applyTheme()};
+function applyTheme(){
+ const b=document.body;b.classList.remove('dark','sepia','black');if(cfg.theme!=='light')b.classList.add(cfg.theme);
+ document.documentElement.style.setProperty('--read',FONTS[cfg.font]||FONTS.serif);themeEpub()}
+$('#bTheme').onclick=()=>{const t=THEMES.map(x=>x[0]);cfg.theme=t[(t.indexOf(cfg.theme)+1)%t.length];SV('cfg',cfg);applyTheme()};
 
 /* ---------- tap / selection -> translate ---------- */
 function bind(target,d,fr,swipe){
@@ -225,7 +242,7 @@ function bind(target,d,fr,swipe){
  target.addEventListener('pointerdown',e=>{p=[e.clientX,e.clientY]});
  target.addEventListener('pointerup',e=>{if(!p)return;const dx=e.clientX-p[0],dy=e.clientY-p[1];p=null;
   if(Math.hypot(dx,dy)<10)setTimeout(()=>{try{tap(e)}catch(x){dbg('Xəta: '+x.message)}},20);
-  else if(swipe&&Math.abs(dx)>70&&Math.abs(dy)<50)dx<0?next():prev()});
+  });
 }
 let dbgT;function dbg(m){const el=$('#prog'),old=el.dataset.o??el.textContent;el.dataset.o=old;el.textContent=m;clearTimeout(dbgT);dbgT=setTimeout(()=>{el.textContent=el.dataset.o;delete el.dataset.o},2500)}
 /* Öz seçim sistemi: iPhone-un menyusu çıxmasın deyə mətn "user-select:none"-dur, sözləri özümüz tapırıq */
@@ -286,7 +303,7 @@ function show(anchor){
 }
 function tap(e){
  const h=pick(e.clientX,e.clientY);
- if(!h){if(ps)hidePop();return}                       /* boş yerə klik → açıq tərcümə bağlanır */
+ if(!h){if(ps)hidePop();else document.body.classList.toggle('focus');return}                       /* boş yerə klik → açıq tərcümə bağlanır */
  if(ps&&S&&S.unit===h.unit){                           /* eyni abzasda başqa sözə toxun → aradakı hamısı seçilir */
   if(h.i>S.b)S.b=h.i;else if(h.i<S.a)S.a=h.i;
   else if(S.a<S.b&&h.i===S.b)S.b--;else if(S.a<S.b&&h.i===S.a)S.a++;
@@ -389,11 +406,23 @@ function exportCsv(){
 
 /* ---------- settings ---------- */
 const fill=(el,skipAuto,val)=>{el.innerHTML=LANGS.filter(l=>!(skipAuto&&l[0]==='Autodetect')).map(l=>`<option value="${l[0]}"${l[0]===val?' selected':''}>${l[1]}</option>`).join('')};
-$('#bSet').onclick=()=>{fill($('#sSrc'),false,cfg.src);fill($('#sDst'),true,cfg.dst);$('#dlg').showModal()};
-$('#sOk').onclick=()=>{cfg.src=$('#sSrc').value;cfg.dst=$('#sDst').value;SV('cfg',cfg);$('#dlg').close()};
+$('#bSet').onclick=()=>{fill($('#sSrc'),false,cfg.src);fill($('#sDst'),true,cfg.dst);
+ $('#sFont').innerHTML=Object.keys(FN).map(k=>`<option value="${k}"${k===cfg.font?' selected':''}>${FN[k]}</option>`).join('');
+ $('#sTheme').innerHTML=THEMES.map(t=>`<option value="${t[0]}"${t[0]===cfg.theme?' selected':''}>${t[1]}</option>`).join('');$('#dlg').showModal()};
+$('#sOk').onclick=()=>{cfg.src=$('#sSrc').value;cfg.dst=$('#sDst').value;cfg.font=$('#sFont').value;cfg.theme=$('#sTheme').value;SV('cfg',cfg);applyTheme();$('#dlg').close()};
 
 ['#pdfView','#txtView'].forEach(q=>$(q).addEventListener('scroll',hidePop));
 bind($('#pdfView'),document,null,true);bind($('#txtView'),document,null,false);bind($('#epubView'),document,null,false);
+/* ---------- swipe ilə vərəq çevirmə ---------- */
+function swipeBind(el){
+ let x0=null,y0=0;
+ el.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;
+  if(x0<28||x0>innerWidth-28)e.preventDefault()},{passive:false});   /* kənardan başlayan jest Safari-nin geri jestinə getməsin */
+ el.addEventListener('touchend',e=>{if(x0==null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5){hidePop();dx<0?next():prev()}},{passive:true});
+}
+['#epubView','#pdfView','#txtView'].forEach(q=>swipeBind($(q)));
+history.pushState({o:1},'');addEventListener('popstate',()=>history.pushState({o:1},''));   /* geri swipe səhifədən çıxarmasın */
 /* ---------- start ---------- */
 applyTheme();count();loadPacks().then(renderLib);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
