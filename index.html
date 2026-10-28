@@ -21,6 +21,21 @@ main{flex:1;min-height:0;position:relative}
 button{transition:transform .12s ease,background .18s,opacity .18s;-webkit-tap-highlight-color:transparent;border-radius:11px}
 button:active{transform:scale(.94);background:rgba(127,127,127,.18)}.fill:active{background:var(--acc);opacity:.85}
 .fill{box-shadow:0 1px 3px #0003}#pa button{border-radius:12px}
+.seg{display:flex;gap:6px;margin:0 0 12px}.seg button{flex:1;border-color:var(--line);padding:9px 6px}.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bk{display:flex;align-items:center;gap:10px;padding:14px;margin-bottom:10px;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.bk .bi{flex:1;min-width:0;cursor:pointer}.bk .bi b{display:block;font:600 16px var(--serif);overflow-wrap:anywhere}.bk small,.mu,.bn{color:var(--mute)}.bk .ba{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.row .rw{flex:1;min-width:0;cursor:pointer}.row .df{font-size:14px;color:var(--mute);margin-top:2px}.row .df i,.wv li i,.wv .ph2{color:var(--acc)}
+.lv{margin-left:8px;font-size:9px;letter-spacing:1px;color:var(--acc)}
+.wv h2{font:600 32px var(--serif);margin:12px 0 0}.wv h4{margin:18px 0 6px;font:600 12px system-ui;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}.wv li{margin:6px 0}.wv ol,.wv ul{padding-left:20px;margin:0}
+mark{background:var(--mark);color:#1b2420;border-radius:3px;padding:0 2px}
+.lset label{display:block;color:var(--mute);font-size:13px;margin:10px 0 4px}.lset select{width:100%;border:1px solid var(--line);background:var(--panel)}
+.qz{max-width:560px;margin:auto;padding-top:6px}.qt{display:flex;align-items:center;gap:10px;margin-bottom:16px;color:var(--mute);font-size:13px}.qb{flex:1;height:6px;background:var(--line);border-radius:4px;overflow:hidden}.qb i{display:block;height:100%;background:var(--acc);transition:width .3s}
+.qk{color:var(--mute);font-size:13px;text-transform:uppercase;letter-spacing:.06em}.qp2{font:22px/1.4 var(--serif);margin:10px 0 18px}.qp2 .big{font:600 34px var(--serif)}
+.opt{display:block;width:100%;text-align:left;padding:13px 14px;margin:0 0 8px;border:1px solid var(--line);background:var(--panel);border-radius:14px;font-size:16px}
+.opt.ok{border-color:#2f9e6b;background:rgba(47,158,107,.18)}.opt.bad{border-color:#d1493f;background:rgba(209,73,63,.16)}
+.fbk{margin:12px 0;padding:12px 14px;border-radius:14px;font-size:15px}.fbk.ok{background:rgba(47,158,107,.15)}.fbk.bad{background:rgba(209,73,63,.14)}
+.qin{font:20px var(--serif);width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}.qin.ok{border-color:#2f9e6b}.qin.bad{border-color:#d1493f}
+.wr{padding:6px 0;border-bottom:1px solid var(--line)}
 input[type=search]{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;width:100%;-webkit-appearance:none}
 #pbar{position:absolute;top:0;left:0;right:0;height:2px;background:var(--line);z-index:4;pointer-events:none}
 #pbar i{display:block;height:100%;width:0;background:var(--acc);transition:width .25s ease;border-radius:0 3px 3px 0}
@@ -471,7 +486,8 @@ function showPop(text,rect,fr,ctx){
   if(r.off)m.push('Oflayn (kitab paketi)');
   if(cfg.src==='Autodetect'&&r.src){const L=LANGS.find(l=>l[0]===r.src);m.push('Dil: '+(L?L[1]:r.src))}
   if(!/\s/.test(text)&&r.alts.length)m.push(r.alts.map(a=>a.pos+': '+a.w.join(', ')).join('\n'));
-  $('#pm').textContent=m.join('\n');place()})
+  $('#pm').textContent=m.join('\n');place();
+  if(!/\s/.test(text)&&(!ps.lang||/^en/.test(ps.lang)))defFetch(text).then(dd=>{if(dd&&ps&&ps.text===text){ps.dd=dd;const f=dd.defs[0];$('#pm').textContent=[$('#pm').textContent,'EN · '+f.pos+': '+f.d].filter(Boolean).join('\n');place()}})})
  .catch(()=>{if(ps&&ps.text===text){$('#pt').textContent=navigator.onLine?'Tərcümə alınmadı. Dilləri ⚙ ilə yoxla və ya bir az sonra yenə cəhd et.':'İnternet yoxdur. Bu söz oflayn paketlərdə, əvvəlki tərcümələrdə və lüğətdə yoxdur.'}});
 }
 function place(){
@@ -486,8 +502,8 @@ function hidePop(){$('#pop').hidden=true;ps=null;S=null;clearHL()}
 const key=s=>s.toLowerCase();
 function starState(){const has=ps&&dict.some(d=>key(d.w)===key(ps.text));$('#pStar').textContent=has?'★ Lüğətdədir':'☆ Lüğətə əlavə et'}
 $('#pStar').onclick=()=>{if(!ps)return;const i=dict.findIndex(d=>key(d.w)===key(ps.text));
- if(i>=0)dict.splice(i,1);else dict.unshift({w:ps.text,t:ps.t,lang:ps.lang||'',ctx:ps.ctx,book:cur?cur.name:'',date:Date.now()});
- SV('dict',dict);starState();count()};
+ if(i>=0)dict.splice(i,1);else dict.unshift({w:ps.text,t:ps.t,lang:ps.lang||'',ctx:ps.ctx,book:cur?cur.name:'',bookId:cur?cur.id:'',date:Date.now(),...(ps.dd?{defs:ps.dd.defs,exs:ps.dd.exs,ph:ps.dd.ph,fx:1}:{})});
+ SV('dict',dict);starState();count();if(i<0&&!dict[0].fx)enrich(dict[0])};
 $('#pX').onclick=hidePop;
 $('#pSay').onclick=()=>ps&&say(ps.text,ps.lang);
 let lastLang='';
@@ -500,39 +516,141 @@ const count=()=>$('#cnt').textContent=dict.length;
 
 /* ---------- dictionary ---------- */
 $('#bDict').onclick=()=>{view('dict');renderDict()};
-let dq='';
-const IV=[0,1,3,7,16,35],dueList=()=>dict.filter(x=>!x.due||x.due<=Date.now());
+/* ================= LÜĞƏT ================= */
+let dq='',dt='books',dBook=null,dWord=null;
+const IV=[0,1,3,7,16,35],isDue=x=>!x.due||x.due<=Date.now(),dueList=()=>dict.filter(isDue),bk=x=>x.book||'Digər';
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const mkb=(t,f,c)=>{const b=el('button',c||'',t);b.onclick=f;return b};
+const shuf=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]),uniq=a=>[...new Set(a)];
+const reEsc=t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),wre=w=>new RegExp('\\b'+reEsc(w)+'\\w*','gi');
+const hiEx=(t,w)=>esc(t).replace(wre(esc(w)),m=>'<mark>'+m+'</mark>');
+const norm=t=>t.toLowerCase().replace(/[^\p{L}]/gu,'');
+const grp=()=>{const m=new Map();for(const x of dict){const k=bk(x);if(!m.has(k))m.set(k,[]);m.get(k).push(x)}return m};
+
+/* ingiliscə izah + nümunələr (Free Dictionary API) */
+const dmem={};
+async function defFetch(w){
+ w=w.toLowerCase();if(dmem[w]!==undefined)return dmem[w];
+ const c=uniq([w,w.replace(/ies$/,'y'),w.replace(/(es|s)$/,''),w.replace(/ed$/,''),w.replace(/ed$/,'e'),w.replace(/ing$/,''),w.replace(/ing$/,'e')]).filter(x=>x.length>1);
+ let neterr=false;
+ for(const q of c){try{
+  const r=await fetch('https://api.dictionaryapi.dev/v2/entries/en/'+encodeURIComponent(q));if(!r.ok)continue;
+  const j=await r.json(),defs=[],exs=[];let ph='';
+  for(const e of j){ph=ph||e.phonetic||(e.phonetics||[]).map(p=>p.text).find(Boolean)||'';
+   for(const m of e.meanings||[])for(const d of(m.definitions||[]).slice(0,2)){defs.push({pos:m.partOfSpeech,d:d.definition});if(d.example)exs.push(d.example)}}
+  if(defs.length)return dmem[w]={defs:defs.slice(0,6),exs:exs.slice(0,3),ph}}catch{neterr=true}}
+ if(neterr)return undefined;return dmem[w]=null;
+}
+async function enrich(x){
+ if(x.fx||/\s/.test(x.w)||(x.lang&&!/^en/.test(x.lang)))return;
+ const d=await defFetch(x.w);if(d===undefined)return;
+ x.fx=1;if(d){x.defs=d.defs;x.exs=d.exs;x.ph=d.ph}SV('dict',dict);
+}
+
+/* ana ekran: Kitablar | Hamısı | Öyrən */
 function renderDict(){
- const d=$('#dict');d.innerHTML='<h2 style="font:600 28px var(--serif);margin:8px 0 12px">Lüğətim</h2>';
- if(!dict.length){d.innerHTML+='<div class="empty">Boşdur. Oxuyarkən sözə toxun və “Lüğətə əlavə et” düyməsini bas.</div>';return}
- const bar=document.createElement('div');bar.className='dbar';
- bar.innerHTML=`<input id="dq" type="search" placeholder="Lüğətdə axtar…" value="${esc(dq)}"><button class="fill" id="bLearn">Öyrən (${dueList().length})</button><button id="bCsv" title="Anki üçün CSV">CSV</button>`;
- d.append(bar);const rows=document.createElement('div');d.append(rows);
- $('#bLearn').onclick=learn;$('#bCsv').onclick=exportCsv;
+ const d=$('#dict');if(dWord)return wordView(d);
+ d.innerHTML='<h2 style="font:600 28px var(--serif);margin:8px 0 12px">Lüğətim</h2>';
+ if(!dict.length){d.append(el('div','empty','Boşdur. Oxuyarkən sözə toxun və “Lüğətə əlavə et” düyməsini bas.'));return}
+ const seg=el('div','seg');
+ [['books','Kitablar'],['all','Hamısı'],['learn','Öyrən']].forEach(([k,n])=>{const b=mkb(n,()=>{dt=k;dBook=null;dq='';renderDict()});if(dt===k&&!dBook)b.classList.add('on');seg.append(b)});
+ d.append(seg);
+ if(dt==='learn')return learnSetup(d);
+ if(dt==='books'&&!dBook)return booksView(d);
+ listView(d,dt==='books'?dBook:null);
+}
+function booksView(d){
+ [...grp().entries()].sort((a,b)=>Math.max(...b[1].map(x=>x.date||0))-Math.max(...a[1].map(x=>x.date||0))).forEach(([name,ws])=>{
+  const due=ws.filter(isDue).length,c=el('div','bk',`<div class="bi"><b>${esc(name)}</b><small>${ws.length} söz${due?' · '+due+' təkrar vaxtı':''}</small></div>`),a=el('div','ba');
+  a.append(mkb('Aç',()=>{dBook=name;dq='';renderDict()}),mkb('Öyrən',()=>startQuiz({scope:name,mode:due?'due':'all',n:15}),'fill'));
+  c.append(a);c.querySelector('.bi').onclick=()=>{dBook=name;dq='';renderDict()};d.append(c)})}
+function listView(d,book){
+ const ws=book?dict.filter(x=>bk(x)===book):dict;
+ if(book){const h=el('div','dbar');h.append(mkb('← Kitablar',()=>{dBook=null;renderDict()}),mkb('Bu kitabı öyrən',()=>startQuiz({scope:book,mode:ws.some(isDue)?'due':'all',n:15}),'fill'));d.append(h,el('h3','',esc(book)+' · '+ws.length+' söz'))}
+ const sb=el('div','dbar',`<input id="dq" type="search" placeholder="Söz, izah və ya tərcümə axtar…" value="${esc(dq)}">`);sb.append(mkb('CSV',exportCsv));d.append(sb);
+ const rows=el('div');d.append(rows);
  const draw=()=>{rows.innerHTML='';const q=dq.toLowerCase();
-  dict.filter(x=>!q||(x.w+' '+(x.t||'')+' '+(x.ctx||'')).toLowerCase().includes(q)).forEach(x=>{const r=document.createElement('div');r.className='row';
-   r.innerHTML=`<div><b>${esc(x.w)}</b> — ${esc(x.t||'')}${x.ctx?`<i>${esc(x.ctx)}</i>`:''}${x.book?`<i>${esc(x.book)}</i>`:''}</div><button title="Səsləndir">🔊</button><button title="Sil">🗑</button>`;
-   const [sp,del]=r.querySelectorAll('button');sp.onclick=()=>say(x.w,x.lang);
-   del.onclick=()=>{dict.splice(dict.indexOf(x),1);SV('dict',dict);count();renderDict()};rows.append(r)})};
+  ws.filter(x=>!q||(x.w+' '+(x.t||'')+' '+(x.defs||[]).map(a=>a.d).join(' ')).toLowerCase().includes(q)).forEach(x=>{
+   const f=x.defs&&x.defs[0],b=Math.min(x.box||0,5),r=el('div','row');
+   r.innerHTML=`<div class="rw"><b>${esc(x.w)}</b>${x.ph?` <small class="mu">${esc(x.ph)}</small>`:''}<span class="lv">${'●'.repeat(b)}${'○'.repeat(5-b)}</span><div class="df">${f?'<i>'+esc(f.pos)+'</i> '+esc(f.d):esc(x.t||'')}</div>${book?'':`<small class="bn">${esc(bk(x))}</small>`}</div>`;
+   r.querySelector('.rw').onclick=()=>{dWord=x;renderDict()};r.append(mkb('🔊',()=>say(x.w,x.lang)));rows.append(r)})};
  $('#dq').oninput=e=>{dq=e.target.value;draw()};draw();
 }
-function learn(){
- const q=dueList().sort(()=>Math.random()-.5).slice(0,20),n0=q.length,miss=new Set();let ok=0;
- if(!n0){alert('Bu gün təkrarlanacaq söz yoxdur 🎉');return}
- const d=$('#dict'),step=flip=>{
-  if(!q.length){d.innerHTML=`<div class="fc"><div class="fw">Bitdi!</div><p>${ok} / ${n0} söz ilk cəhddə düzgün oldu.</p><button class="fill" id="bk">Lüğətə qayıt</button></div>`;$('#bk').onclick=renderDict;return}
-  const x=q[0];
-  d.innerHTML=`<div class="fc"><div class="cn">${n0-new Set(q).size+1} / ${n0}</div><div class="fw">${esc(x.w)}</div>${flip?`<div class="ft">${esc(x.t||'')}</div>${x.ctx?`<i>${esc(x.ctx)}</i>`:''}<div class="fb"><button id="no">✗ Bilmədim</button><button class="fill" id="yes">✓ Bildim</button></div>`:'<div class="fb"><button class="fill" id="show">Tərcüməni göstər</button></div>'}<div class="fs"><button id="sp">🔊</button> <button id="ex">Çıx</button></div></div>`;
-  $('#sp').onclick=()=>say(x.w,x.lang);$('#ex').onclick=renderDict;
-  if(!flip){$('#show').onclick=()=>step(true);return}
-  $('#yes').onclick=()=>{x.box=Math.min((x.box||0)+1,5);x.due=Date.now()+IV[x.box]*864e5;if(!miss.has(x))ok++;q.shift();SV('dict',dict);step(false)};
-  $('#no').onclick=()=>{miss.add(x);x.box=0;x.due=Date.now();q.push(q.shift());SV('dict',dict);step(false)};
+function wordView(d){
+ const x=dWord;d.innerHTML='';d.append(mkb('← Geri',()=>{dWord=null;renderDict()}));
+ const ex=uniq([x.ctx,...(x.exs||[])].filter(Boolean)),c=el('div','wv');
+ c.innerHTML=`<h2>${esc(x.w)}</h2><div class="ph2">${x.ph?esc(x.ph):''}</div>
+ <h4>Mənası (English)</h4>${x.defs&&x.defs.length?'<ol>'+x.defs.map(a=>`<li><i>${esc(a.pos)}</i> ${esc(a.d)}</li>`).join('')+'</ol>':'<p class="mu">'+(x.fx?'İngiliscə izah tapılmadı.':'Yüklənir…')+'</p>'}
+ <h4>Nümunə cümlələr</h4>${ex.length?'<ul>'+ex.map(t=>`<li>${hiEx(t,x.w)}${t===x.ctx?' <small class="mu">(kitabdan)</small>':''}</li>`).join('')+'</ul>':'<p class="mu">Yoxdur.</p>'}
+ <h4>Azərbaycanca</h4><p>${esc(x.t||'—')}</p>
+ <small class="mu">${esc(bk(x))} · səviyyə ${x.box||0}/5 · ${x.due&&x.due>Date.now()?'növbəti təkrar: '+new Date(x.due).toLocaleDateString('az'):'təkrar vaxtı gəlib'}</small>`;
+ const a=el('div','dbar');a.style.marginTop='14px';
+ a.append(mkb('🔊 Səsləndir',()=>say(x.w,x.lang)),mkb('🗑 Sil',()=>{if(confirm('Söz silinsin?')){dict.splice(dict.indexOf(x),1);SV('dict',dict);count();dWord=null;renderDict()}}));
+ c.append(a);d.append(c);
+ if(!x.fx)enrich(x).then(()=>{if(dWord===x)renderDict()});
+}
+
+/* ================= ÖYRƏN (test) ================= */
+function learnSetup(d){
+ const g=grp();
+ d.append(el('p','mu',`Test üsulu: variantlardan düzgününü seç və ya sözü yaz, proqram özü yoxlayır. Düzgün cavab sözü sonrakı təkrara uzaqlaşdırır (1, 3, 7, 16, 35 gün), səhv isə geri qaytarır. Sual növləri sözün səviyyəsinə görə çətinləşir. Hazırda təkrar vaxtı gələn söz: <b>${dueList().length}</b>.`));
+ d.append(el('div','lset',`<label>Hansı sözlər?</label><select id="lsc"><option value="">Bütün sözlər (${dict.length})</option>${[...g.keys()].map(k=>`<option value="${esc(k)}">${esc(k)} (${g.get(k).length})</option>`).join('')}</select><label>Nələr?</label><select id="lmd"><option value="due">Təkrar vaxtı gələnlər</option><option value="all">Hamısı</option></select><label>Sual sayı</label><select id="lnn"><option>10</option><option selected>15</option><option>25</option><option>40</option></select>`));
+ const b=mkb('Başla',()=>startQuiz({scope:$('#lsc').value,mode:$('#lmd').value,n:+$('#lnn').value}),'fill');b.style.cssText='width:100%;padding:12px;margin-top:14px';d.append(b);
+}
+async function startQuiz(o){
+ dt='learn';dBook=null;dWord=null;const d=$('#dict');
+ const pool=o.scope?dict.filter(x=>bk(x)===o.scope):dict.slice(),items=shuf(o.mode==='due'?pool.filter(isDue):pool).slice(0,o.n||15);
+ if(!items.length){alert(o.mode==='due'?'Bu seçimdə təkrar vaxtı gəlmiş söz yoxdur 🎉 “Hamısı” seçib yoxlaya bilərsən.':'Söz yoxdur.');return}
+ d.innerHTML='<div class="empty">Sual hazırlanır…</div>';
+ if(navigator.onLine)await Promise.all(items.filter(x=>!x.fx).map(enrich));
+ runQuiz(items,o);
+}
+const pickEx=x=>[x.ctx,...(x.exs||[])].find(t=>t&&t.length<230&&wre(x.w).test(t));
+function mkQ(x){
+ const b=x.box||0,oth=dict.filter(o=>o!==x&&o.w.toLowerCase()!==x.w.toLowerCase()),dd=o=>o.defs&&o.defs[0]?o.defs[0].d:'';
+ const hasD=!!dd(x),ex=pickEx(x),ph=x.ph?` <small>${esc(x.ph)}</small>`:'',blank='<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>';
+ const info=`<b>${esc(x.w)}</b>${ph}${hasD?' — '+esc(dd(x)):x.t?' — '+esc(x.t):''}${ex?`<br><i>${hiEx(ex,x.w)}</i>`:''}`;
+ const wr=(fn,n=3)=>shuf(uniq(oth.map(fn).filter(Boolean)).filter(v=>v!==fn(x))).slice(0,n);
+ const av={def:hasD&&wr(dd).length>=1,az:!!x.t&&wr(o=>o.t).length>=1,rev:hasD&&wr(o=>o.w).length>=1,cloze:!!ex&&wr(o=>o.w).length>=1},typeOk=hasD||ex||x.t;
+ const t=(b<=1?['def','az','rev']:b<=3?['cloze','rev','def','az']:['type','cloze','rev','def']).find(k=>k==='type'?typeOk:av[k])||'type';
+ const mc=(label,prompt,right,wrongs)=>({label,prompt,right,info,opts:shuf([right,...wrongs])});
+ if(t==='def')return mc('Sözün mənası hansıdır?',`<div class="big">${esc(x.w)}</div>${ph}`,dd(x),wr(dd));
+ if(t==='az')return mc('Azərbaycanca tərcüməsi hansıdır?',`<div class="big">${esc(x.w)}</div>${ph}`,x.t,wr(o=>o.t));
+ if(t==='rev')return mc('Bu izaha uyğun söz hansıdır?',esc(dd(x)),x.w,wr(o=>o.w));
+ if(t==='cloze')return mc('Boşluğa uyğun sözü seç',esc(ex).replace(wre(esc(x.w)),blank),x.w,wr(o=>o.w));
+ const pr=hasD?esc(dd(x)):ex?esc(ex).replace(wre(esc(x.w)),blank):'Azərbaycanca: '+esc(x.t||'');
+ return{label:'Sözü ingiliscə yaz',prompt:pr,hint:x.w[0]+' '+'_ '.repeat(Math.max(0,x.w.length-1))+'('+x.w.length+' hərf)',right:x.w,info};
+}
+function runQuiz(items,o){
+ const d=$('#dict'),total=items.length,q=items.slice(),first=new Set(),wrong=[];let ok=0,bad=0,streak=0,best=0;
+ const step=()=>{
+  if(!q.length)return end();
+  const x=q[0],Q=mkQ(x);
+  d.innerHTML=`<div class="qz"><div class="qt"><button id="qe">✕</button><div class="qb"><i style="width:${(total-q.length)/total*100}%"></i></div><span>✓ ${ok} · ✗ ${bad}</span></div><div class="qk">${Q.label}</div><div class="qp2">${Q.prompt}</div><div id="qo"></div><div id="qf"></div></div>`;
+  $('#qe').onclick=renderDict;
+  const fin=correct=>{
+   if(!first.has(x)){first.add(x);
+    if(correct){ok++;x.box=Math.min((x.box||0)+1,5);x.due=Date.now()+IV[x.box]*864e5;streak++;best=Math.max(best,streak)}
+    else{bad++;wrong.push(x);x.box=0;x.due=Date.now();streak=0}SV('dict',dict)}
+   $('#qf').innerHTML=`<div class="fbk ${correct?'ok':'bad'}">${correct?'<b>Düzdür ✓</b>':'<b>Səhv ✗</b> Düzgün cavab: <b>'+esc(Q.right)+'</b>'}<div style="margin-top:8px">${Q.info}</div></div><button class="fill" id="qn" style="width:100%;padding:12px">Növbəti</button>`;
+   $('#qn').onclick=()=>{correct?q.shift():q.push(q.shift());step()};$('#qn').focus();
+  };
+  const box=$('#qo');
+  if(Q.opts){Q.opts.forEach((t,i)=>{const b=el('button','opt',`<b>${'ABCD'[i]}</b>&nbsp; ${esc(t)}`);b.dataset.t=t;
+   b.onclick=()=>{[...box.children].forEach(z=>z.disabled=true);const c=t===Q.right;b.classList.add(c?'ok':'bad');if(!c)[...box.children].forEach(z=>{if(z.dataset.t===Q.right)z.classList.add('ok')});fin(c)};box.append(b)})}
+  else{box.innerHTML=`<div class="mu" style="margin-bottom:8px">${esc(Q.hint)}</div><input class="qin" id="qi" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Yaz…"><div style="display:flex;gap:8px;margin-top:10px"><button class="fill" id="qy">Yoxla</button><button id="qk2">Bilmirəm</button></div>`;
+   const chk=g=>{if($('#qy').disabled)return;['#qy','#qk2','#qi'].forEach(s=>$(s).disabled=true);const c=!!g&&norm(g)===norm(Q.right);$('#qi').classList.add(c?'ok':'bad');fin(c)};
+   $('#qy').onclick=()=>chk($('#qi').value.trim());$('#qk2').onclick=()=>chk('');$('#qi').onkeydown=e=>{if(e.key==='Enter')chk($('#qi').value.trim())};$('#qi').focus()}
  };
- step(false);
+ const end=()=>{
+  d.innerHTML=`<div class="fc"><div class="fw">${Math.round(ok/total*100)}%</div><p>${ok} / ${total} ilk cəhddə düzgün · ən uzun seriya: ${best}</p>${wrong.length?'<h4 class="mu">Səhv etdiyin sözlər</h4>'+wrong.map(w=>`<div class="wr"><b>${esc(w.w)}</b> — <small class="mu">${esc(w.defs&&w.defs[0]?w.defs[0].d:w.t||'')}</small></div>`).join(''):'<p>Hamısı düzgün! 🎉</p>'}<div class="fb"><button class="fill" id="a1">Yenidən</button><button id="a2">Lüğətə qayıt</button></div></div>`;
+  $('#a1').onclick=()=>startQuiz(o);$('#a2').onclick=renderDict;count();
+ };
+ step();
 }
 function exportCsv(){
  const q=s=>'"'+String(s||'').replace(/"/g,'""')+'"';
- const csv=dict.map(x=>[x.w,x.t,x.ctx,x.book].map(q).join(',')).join('\n');
+ const csv=dict.map(x=>[x.w,(x.defs&&x.defs[0]?x.defs[0].d:''),x.t,x.ctx,x.book].map(q).join(',')).join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download='lugetim.csv';a.click()}
 
 /* ---------- settings ---------- */
