@@ -1,5 +1,5 @@
 /* Oxu — service worker (v3) */
-const V = 'oxu-v3.1.0';
+const V = 'oxu-v3.2.0';
 const CORE = [
   './', './index.html', './manifest.json', './icon.svg',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
