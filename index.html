@@ -268,6 +268,34 @@ mark{background:var(--mark);color:#1b2420;border-radius:3px;padding:0 2px}
 .fb{display:flex;gap:10px;justify-content:center;margin:22px 0}
 .fc button{padding:10px 18px;font-size:16px;border:1px solid var(--line)}
 
+/* ---------- kataloq ---------- */
+#lib .addrow{display:flex;gap:10px;align-items:center;margin-bottom:4px}
+#bCat{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:12px 20px;font-weight:600}
+#cat{max-width:720px;margin:auto;padding:16px 20px 40px}
+#cat .ch{display:flex;align-items:center;gap:12px;margin:4px 0 10px}
+#cat .ch h2{font:700 30px/1 var(--serif);letter-spacing:-.01em;margin:0}
+#cat .back{width:36px;height:36px;flex:none;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;font-size:17px;padding:0}
+#cat .sub{font:11px/1.5 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin:0 0 14px}
+#cSrc{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+#cSrc::-webkit-scrollbar{display:none}
+#cSrc .chip{flex:none;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font:600 12px var(--mono);letter-spacing:.02em;color:var(--mute);background:var(--panel)}
+#cSrc .chip.on{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+#cQ{margin-top:12px;border-radius:999px;padding:11px 16px}
+#cStat{font:11px/1.5 var(--mono);letter-spacing:.03em;text-transform:uppercase;color:var(--mute);margin:14px 0 2px;min-height:17px}
+#cRes .crow{display:flex;gap:13px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+#cRes .cph,#cRes .cimg{width:46px;height:66px;flex:none;border-radius:5px;background:var(--line);overflow:hidden}
+#cRes .cimg img{width:100%;height:100%;object-fit:cover;display:block}
+#cRes .cph{display:grid;place-items:center;font:700 20px var(--serif);color:var(--mute)}
+#cRes .ct{flex:1;min-width:0}
+#cRes .ct b{display:block;font:600 16px/1.32 var(--serif);overflow-wrap:anywhere}
+#cRes .ct small{display:block;font:11px/1.5 var(--mono);letter-spacing:.02em;color:var(--mute);margin-top:3px}
+#cRes .ct .sn{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:12.5px/1.5 system-ui;color:var(--mute);margin-top:5px}
+#cRes .dl{flex:none;align-self:center;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font:600 12px var(--mono);min-width:62px}
+#cRes .dl:disabled{opacity:.6}
+#cRes .dl.done{background:var(--acc);border-color:var(--acc);color:var(--onacc);opacity:1}
+#cNote{margin-top:20px;font:11px/1.6 var(--mono);color:var(--mute)}
+#cNote a{color:inherit}
+
 /* ---------- toast ---------- */
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 92px);z-index:40;max-width:calc(100vw - 28px);display:flex;align-items:center;gap:10px;background:#101114;color:#fff;border-radius:999px;padding:10px 16px;font-size:13px;box-shadow:0 10px 30px #0006;animation:up .2s}
 #toast button{background:#fff;color:#101114;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;flex:none}
@@ -280,7 +308,7 @@ body.focus #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 20px)}
   <section id="lib">
     <h2>Kitabxana</h2>
     <p class="sub">PDF · EPUB · TXT — kitablar yalnız bu cihazda saxlanılır</p>
-    <button class="fill" id="bAdd">+ Kitab əlavə et</button>
+    <div class="addrow"><button class="fill" id="bAdd">+ Kitab əlavə et</button><button id="bCat">Kataloq</button></div>
     <input type="file" id="file" accept=".pdf,.epub,.txt,application/pdf,application/epub+zip,text/plain" multiple hidden>
     <div id="cont"></div>
     <div id="stats"></div>
@@ -299,6 +327,20 @@ body.focus #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 20px)}
       </select>
     </div>
     <div id="books"></div>
+  </section>
+
+  <section id="cat" hidden>
+    <div class="ch"><button class="back" id="cBack" aria-label="Geri">←</button><h2>Kataloq</h2></div>
+    <p class="sub">Pulsuz, açıq lisenziyalı kitablar</p>
+    <div id="cSrc">
+      <button class="chip on" data-s="az">Vikimənbə · AZ</button>
+      <button class="chip" data-s="en">Wikisource · EN</button>
+      <button class="chip" data-s="pg">Gutenberg</button>
+    </div>
+    <input id="cQ" type="search" placeholder="Kitab adı və ya müəllif…" autocomplete="off" autocapitalize="off" enterkeyhint="search" spellcheck="false">
+    <div id="cStat"></div>
+    <div id="cRes"></div>
+    <div id="cNote"></div>
   </section>
 
   <section id="reader" hidden>
@@ -631,12 +673,460 @@ $('#file').onchange=async e=>{
   e.target.value='';
   if(ok.length){requestPersist();toast(ok.length+' kitab əlavə olundu');renderLib()}
 };
+/* ================= 6b. KATALOQ (pulsuz kitablar) ================= */
+const CAT={src:'az',q:'',seq:0,busy:false,items:[]};
+const CAT_LANG={az:'az',en:'en'};
+const CAT_NAME={az:'Vikimənbə (AZ)',en:'Wikisource (EN)',pg:'Gutenberg'};
+const catCache={};
+
+function openCat(){
+  view('cat');
+  $('#cQ').value=CAT.q;
+  catChips();
+  if(!$('#cRes').childElementCount)catHint();
+  $('#cNote').innerHTML='Mənbələr: <b>az.wikisource.org</b>, <b>en.wikisource.org</b>, <b>gutenberg.org</b> — ictimai mülkiyyətdə olan (müəllif hüququ bitmiş) əsərlər. Yüklənən kitab cihazda qalır və oflayn oxunur.'
+    +((cfg.proxy||'').trim()?'':'' );
+  setTimeout(()=>{try{$('#cQ').focus()}catch{}},80);
+}
+function catChips(){$$('#cSrc .chip').forEach(b=>b.classList.toggle('on',b.dataset.s===CAT.src))}
+function catHint(){
+  $('#cStat').textContent='';
+  if(CAT.src==='pg'){
+    const px=(cfg.proxy||'').trim();
+    $('#cRes').innerHTML='<p class="mu" style="padding:18px 0;line-height:1.6">Project Gutenberg — 70 000-dən çox pulsuz kitab. '+
+      (px?'Kitab adı və ya müəllif yaz.':'Axtarış və yükləmə üçün kiçik proxy serveri lazımdır (README → “Proxy”).')+'</p>'+
+      (px?'':'<button class="fill" id="cProxyBtn" style="border-radius:999px;padding:10px 18px">Proxy ayarla</button>');
+    const pb=$('#cProxyBtn');if(pb)pb.onclick=openSettings;
+    return;
+  }
+  $('#cRes').innerHTML='<p class="mu" style="padding:22px 0;line-height:1.6">Kitab adı və ya müəllif yaz. Məsələn: <b>Qorqud</b>, <b>Nəsimi</b>, <b>Leyli</b>, <b>Nizami</b>.</p>';
+}
+function setCatStat(t){const e=$('#cStat');if(e)e.textContent=t||''}
+
+async function jget(u,ms){
+  let r;const ctl=new AbortController();
+  const to=setTimeout(()=>ctl.abort(),ms||15000);
+  try{r=await fetch(u,{credentials:'omit',signal:ctl.signal})}
+  catch(e){
+    clearTimeout(to);
+    throw new Error(e&&e.name==='AbortError'?'Server cavab vermədi':'Şəbəkə xətası (internet yoxdur?)');
+  }
+  clearTimeout(to);
+  if(!r.ok)throw new Error('Server xətası: HTTP '+r.status);
+  return r.json();
+}
+
+/* ---- axtarış ---- */
+async function catSearch(){
+  const q=CAT.q.trim();
+  const seq=++CAT.seq;
+  if(q.length<2){catHint();return}
+  setCatStat('Axtarılır…');
+  $('#cRes').innerHTML='';
+  try{
+    const key=CAT.src+':'+q.toLowerCase();
+    let items=catCache[key];
+    if(!items){
+      items=CAT.src==='pg'?await pgSearch(q):await wsSearch(CAT.src,q);
+      catCache[key]=items;
+    }
+    if(seq!==CAT.seq)return;
+    CAT.items=items;
+    if(!items.length){$('#cRes').innerHTML='<p class="mu" style="padding:22px 0">Nəticə tapılmadı. Başqa sözlə yoxla.</p>';setCatStat('');return}
+    setCatStat(items.length+' nəticə');
+    catRender();
+  }catch(e){
+    if(seq!==CAT.seq)return;
+    $('#cRes').innerHTML='<p class="mu" style="padding:18px 0;line-height:1.6">'+esc((e&&e.message)||'Xəta')+'</p>'+
+      (e&&e.needProxy?'<button class="fill" id="cProxyBtn" style="border-radius:999px;padding:10px 18px">Proxy ayarla</button>':'');
+    const pb=$('#cProxyBtn');if(pb)pb.onclick=openSettings;
+    setCatStat('Alınmadı');
+  }
+}
+
+async function wsSearch(key,q){
+  const lang=CAT_LANG[key];
+  const u='https://'+lang+'.wikisource.org/w/api.php?action=query&list=search&srsearch='+
+    encodeURIComponent(q)+'&srnamespace=0&srlimit=30&format=json&origin=*';
+  const j=await jget(u);
+  const arr=(j&&j.query&&j.query.search)||[];
+  return arr.map(s=>({k:'ws',lang,title:s.title,size:s.size||0,snip:htmlText(s.snippet||'')}));
+}
+
+async function pgSearch(q){
+  const base='https://gutendex.com/books/?search='+encodeURIComponent(q);
+  const proxy=(cfg.proxy||'').trim();
+  let j;
+  if(proxy)j=await jget(proxyUrl(proxy,base),20000);
+  else{
+    try{j=await jget(base,8000)}
+    catch(e){
+      const er=new Error('Gutenberg kataloqu cavab vermir. Parametrlər → Kataloq bölməsində proxy təyin et.');
+      er.needProxy=1;throw er;
+    }
+  }
+  const arr=(j&&j.results)||[];
+  return arr.map(b=>{
+    const fm=b.formats||{};
+    let dl='';
+    for(const k in fm){if(/^application\/epub\+zip/.test(k)){dl=fm[k];break}}
+    if(!dl)for(const k in fm){if(/epub/.test(k.toLowerCase())){dl=fm[k];break}}
+    return {k:'pg',id:b.id,title:b.title||'',author:(b.authors&&b.authors[0]&&b.authors[0].name)||'',
+      langs:b.languages||[],dl,img:fm['image/jpeg']||'',dlc:b.download_count||0};
+  }).filter(x=>x.title);
+}
+
+/* ---- siyahı ---- */
+function catMeta(it){
+  if(it.k==='pg'){
+    const l=(it.langs||[]).join(', ');
+    const d=it.dlc?(it.dlc>=1000?Math.round(it.dlc/1000)+'k':it.dlc)+' yükləmə':'';
+    return [it.author,l,d].filter(Boolean).join(' · ');
+  }
+  const sz=it.size?(it.size<1024?it.size+' B':Math.round(it.size/1024)+' KB'):'';
+  return ['Vikimənbə',sz].filter(Boolean).join(' · ');
+}
+function catRender(){
+  const box=$('#cRes');box.innerHTML='';
+  if(!CAT.items.length)return;
+  const frag=document.createDocumentFragment();
+  for(const it of CAT.items){
+    const d=document.createElement('div');d.className='crow';
+    const img=it.k==='pg'&&it.img
+      ?'<div class="cimg"><img src="'+esc(it.img)+'" alt="" loading="lazy"></div>'
+      :'<div class="cph">'+esc((it.title||'?').trim().charAt(0).toUpperCase())+'</div>';
+    d.innerHTML=img+'<div class="ct"><b>'+esc(it.title)+'</b><small>'+esc(catMeta(it))+'</small>'+
+      (it.snip?'<div class="sn">'+esc(it.snip)+'</div>':'')+'</div>'+
+      '<button class="dl">Yüklə</button>';
+    const b=d.querySelector('.dl');
+    b.onclick=()=>catGet(it,b);
+    frag.append(d);
+  }
+  box.append(frag);
+}
+
+/* ---- yükləmə ---- */
+async function catGet(it,btn){
+  if(CAT.busy){toast('Başqa yükləmə davam edir…');return}
+  if(btn.classList.contains('done'))return;
+  CAT.busy=true;btn.disabled=true;
+  const label=btn.textContent;btn.textContent='…';
+  try{
+    if(it.k==='pg')await pgDownload(it);
+    else await wsDownload(it);
+    btn.textContent='✓';btn.classList.add('done');
+  }catch(e){
+    console.error(e);
+    btn.textContent=label;btn.disabled=false;
+    toast('Yüklənmədi: '+((e&&e.message)||e),5000);
+    setCatStat('');
+  }finally{CAT.busy=false}
+}
+
+async function wsDownload(it){
+  const lang=it.lang,title=it.title;
+  setCatStat('Bölmələr yoxlanılır…');
+  const subs=await wsSubpages(lang,title);
+  if(subs.length){
+    const ord=await wsOrder(lang,title);
+    if(ord.length){
+      const idx={};ord.forEach((t,i)=>{idx[t]=i});
+      const big=1e6;
+      subs.sort((a,b)=>{
+        const ia=a in idx?idx[a]:big,ib=b in idx?idx[b]:big;
+        return ia-ib||a.localeCompare(b,'az',{numeric:true,sensitivity:'base'});
+      });
+    }
+  }
+  const pages=subs.length?subs:[title];
+  if(pages.length>600)throw new Error('Çox böyük əsər ('+pages.length+' bölmə)');
+  const out=new Array(pages.length);let done=0;
+  await pool(pages,4,async(p,i)=>{
+    out[i]=await wsSection(lang,p);
+    done++;setCatStat('Yüklənir… '+done+'/'+pages.length);
+  });
+  const secs2=out.filter(s=>s&&s.html&&s.html.length>20);
+  if(!secs2.length)throw new Error('Mətn tapılmadı');
+  setCatStat('EPUB hazırlanır…');
+  const blob=await buildEpub({title:readable(title),author:'Vikimənbə',lang,sections:secs2});
+  await saveBook(blob,readable(title));
+  setCatStat('✓ Kitabxanaya əlavə olundu');
+}
+
+async function wsOrder(lang,title){
+  try{
+    const u='https://'+lang+'.wikisource.org/w/api.php?action=parse&redirects=1&page='+
+      encodeURIComponent(title)+'&prop=text&disableeditsection=1&format=json&origin=*';
+    const j=await jget(u);
+    const html=(j&&j.parse&&j.parse.text&&j.parse.text['*'])||'';
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const pre=String(title).replace(/_/g,' ')+'/';
+    const out=[],seen={};
+    doc.querySelectorAll('a[href*="/wiki/"]').forEach(a=>{
+      let h=a.getAttribute('href')||'';
+      const i=h.indexOf('/wiki/');
+      if(i<0)return;
+      h=h.slice(i+6).split('#')[0];
+      let t;try{t=decodeURIComponent(h)}catch{t=h}
+      t=t.replace(/_/g,' ').trim();
+      if(t.indexOf(pre)===0&&!seen[t]){seen[t]=1;out.push(t)}
+    });
+    return out;
+  }catch{return []}
+}
+async function wsSubpages(lang,title){
+  const out=[];let cont='';
+  for(let guard=0;guard<10;guard++){
+    const u='https://'+lang+'.wikisource.org/w/api.php?action=query&list=allpages&apprefix='+
+      encodeURIComponent(title+'/')+'&aplimit=500&format=json&origin=*'+(cont?'&apcontinue='+encodeURIComponent(cont):'');
+    const j=await jget(u);
+    ((j&&j.query&&j.query.allpages)||[]).forEach(p=>{if(p&&p.title&&p.title!==title)out.push(p.title)});
+    cont=j&&j.continue&&j.continue.apcontinue;
+    if(!cont)break;
+  }
+  return out.sort((a,b)=>a.localeCompare(b,'az',{numeric:true,sensitivity:'base'}));
+}
+
+async function wsSection(lang,title){
+  const u='https://'+lang+'.wikisource.org/w/api.php?action=parse&redirects=1&page='+
+    encodeURIComponent(title)+'&prop=text&disableeditsection=1&disabletoc=1&format=json&origin=*';
+  let j;
+  try{j=await jget(u)}catch{return null}
+  if(!j||j.error)return null;
+  const raw=(j.parse&&j.parse.text&&j.parse.text['*'])||'';
+  const body=wsClean(raw);
+  if(!body)return null;
+  const t=readable(title);
+  const head=/^<h[1-6]/.test(body)?'':'<h2 class="st">'+esc(t)+'</h2>';
+  return {title:t,html:head+body};
+}
+
+function readable(t){
+  let s=String(t||'').replace(/_/g,' ').replace(/\s+/g,' ').trim();
+  const i=s.lastIndexOf('/');
+  if(i>=0)s=s.slice(i+1);
+  return s.slice(0,120)||'Adsız';
+}
+
+/* ---- Wikisource HTML → sadə XHTML ---- */
+const WS_INLINE={B:'b',STRONG:'strong',I:'i',EM:'em',U:'u',S:'s',DEL:'del',INS:'ins',SMALL:'small',SUB:'sub',SUP:'sup',CODE:'code',MARK:'mark',CITE:'cite',Q:'q',ABBR:'abbr',VAR:'var',KBD:'kbd'};
+const WS_HEAD={H1:'h2',H2:'h2',H3:'h3',H4:'h4',H5:'h5',H6:'h6'};
+const WS_BLK={P:1,BLOCKQUOTE:1,PRE:1,LI:1,DT:1,DD:1,UL:1,OL:1,DIV:1,SECTION:1,ARTICLE:1,CENTER:1,FIGURE:1,HEADER:1,FOOTER:1,ASIDE:1,MAIN:1};
+
+function wsClean(raw){
+  let doc;
+  try{doc=new DOMParser().parseFromString(String(raw||''),'text/html')}catch{return ''}
+  const root=doc.body;
+  if(!root)return '';
+  try{
+    root.querySelectorAll('script,style,noscript,link,meta,table,thead,tbody,tr,td,th,caption,colgroup,col,'+
+      '.mw-editsection,.noprint,.ws-noexport,.ws-header,.sistersitebox,#toc,.toc,.mw-references-wrap,'+
+      '.references,sup.reference,.navbox,.catlinks,.mw-empty-elt,.mw-cite-backlink,.mw-indicators,'+
+      '.mw-jump-link,.printfooter,.mw-headline-number,.metadata,.ambox,.mbox-small').forEach(n=>n.remove());
+  }catch{}
+  let html='';
+  try{for(const c of root.childNodes)html+=wsNode(c)}catch{return ''}
+  return html
+    .replace(/<p>(\s|&nbsp;|<br\/>)*<\/p>/g,'')
+    .replace(/<li>(\s|&nbsp;)*<\/li>/g,'')
+    .replace(/(<br\/>)(\s|<br\/>)+/g,'<br/>')
+    .replace(/[ \t]{2,}/g,' ')
+    .trim();
+}
+function wsNode(n){
+  if(n.nodeType===3)return esc(String(n.nodeValue).replace(/[ \t\r\n\u00a0]+/g,' ').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,''));
+  if(n.nodeType!==1)return '';
+  const tag=n.tagName.toUpperCase();
+  if(tag==='BR')return '<br/>';
+  if(tag==='HR')return '<hr/>';
+  if(tag==='IMG')return '';
+  if(WS_HEAD[tag]){
+    const inner=wsKids(n).trim();
+    return inner?'<'+WS_HEAD[tag]+'>'+inner+'</'+WS_HEAD[tag]+'>':'';
+  }
+  if(tag==='P'||tag==='BLOCKQUOTE'||tag==='PRE'||tag==='LI'||tag==='DT'||tag==='DD'){
+    const inner=wsKids(n).trim();
+    if(!inner)return '';
+    const t=tag.toLowerCase();
+    return '<'+t+'>'+inner+'</'+t+'>';
+  }
+  if(tag==='UL'||tag==='OL'){
+    const inner=wsKids(n).trim();
+    return inner?'<'+tag.toLowerCase()+'>'+inner+'</'+tag.toLowerCase()+'>':'';
+  }
+  if(WS_INLINE[tag]){
+    const inner=wsKids(n);
+    return inner.trim()?'<'+WS_INLINE[tag]+'>'+inner+'</'+WS_INLINE[tag]+'>':'';
+  }
+  if(tag==='A')return wsKids(n);
+  const inner=wsKids(n).trim();
+  if(!inner)return '';
+  if(tag==='DIV'||tag==='SECTION'||tag==='ARTICLE'||tag==='CENTER'||tag==='FIGURE'||tag==='HEADER'||tag==='FOOTER'||tag==='ASIDE'||tag==='MAIN'){
+    let blk=false;
+    for(const c of n.children){
+      const t2=c.tagName.toUpperCase();
+      if(WS_BLK[t2]||WS_HEAD[t2]){blk=true;break}
+    }
+    return blk?inner:'<p>'+inner+'</p>';
+  }
+  return inner;
+}
+function wsKids(n){
+  let s='';
+  for(const c of n.childNodes)s+=wsNode(c);
+  return s;
+}
+
+async function pool(arr,n,fn){
+  let i=0;
+  const w=Math.max(1,Math.min(n,arr.length));
+  await Promise.all(new Array(w).fill(0).map(async()=>{
+    for(;;){const k=i++;if(k>=arr.length)return;await fn(arr[k],k)}
+  }));
+}
+
+/* ---- EPUB yaratma ---- */
+function uuid(){
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+    const r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);
+  });
+}
+function epubCover(title,author){
+  try{
+    const W=600,H=900,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    const g=cv.getContext('2d'),s=String(title||'?');
+    let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;
+    const gr=g.createLinearGradient(0,0,W,H);
+    gr.addColorStop(0,'hsl('+h+',42%,34%)');
+    gr.addColorStop(1,'hsl('+((h+46)%360)+',48%,15%)');
+    g.fillStyle=gr;g.fillRect(0,0,W,H);
+    g.fillStyle='rgba(255,255,255,.18)';g.fillRect(48,54,W-96,3);
+    g.textAlign='left';g.fillStyle='#fff';
+    g.font='700 46px Georgia,"Times New Roman",serif';
+    const words=s.split(/\s+/),lines=[];let line='';
+    for(const w of words){
+      const t=line?line+' '+w:w;
+      if(g.measureText(t).width>W-120&&line){lines.push(line);line=w}else line=t;
+    }
+    if(line)lines.push(line);
+    if(lines.length>7){lines.length=7;lines[6]=lines[6].slice(0,26)+'…'}
+    let y=270;lines.forEach(l=>{g.fillText(l,60,y);y+=56});
+    g.fillStyle='rgba(255,255,255,.16)';g.fillRect(48,H-146,W-96,2);
+    g.font='400 24px Georgia,"Times New Roman",serif';g.fillStyle='rgba(255,255,255,.78)';
+    g.fillText(String(author||'').slice(0,42),60,H-96);
+    return cv.toDataURL('image/jpeg',.86).split(',')[1];
+  }catch{return null}
+}
+async function buildEpub(o){
+  if(!window.JSZip)await loadScript('vendor/jszip.min.js');
+  const zip=new JSZip(),lang=o.lang||'az',secs=o.sections||[];
+  const bid='urn:uuid:'+uuid();
+  const mod=new Date().toISOString().replace(/\.\d+Z$/,'Z');
+  zip.file('mimetype','application/epub+zip',{compression:'STORE'});
+  zip.file('META-INF/container.xml','<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>');
+  zip.file('OEBPS/style.css','body{margin:0;padding:1.1em 1.2em 3em;font-family:Georgia,"Times New Roman",serif;line-height:1.65;color:#1b1b1b;background:#fff;max-width:46em;margin:0 auto}'+
+    'h1,h2,h3,h4{line-height:1.25;margin:1.5em 0 .6em}h2{font-size:1.4em}h3{font-size:1.18em}'+
+    'p{margin:0 0 .85em;text-align:justify}blockquote{margin:1em 0;padding-left:1em;border-left:3px solid #ddd;color:#444}'+
+    'ul,ol{padding-left:1.4em}li{margin:.3em 0}pre{white-space:pre-wrap}hr{border:0;border-top:1px solid #ddd;margin:1.6em 0}'+
+    'img{max-width:100%}.st{margin-top:0}');
+  let man='',spine='',nav='',np='';
+  secs.forEach((s,i)=>{
+    const f='s'+i+'.xhtml';
+    zip.file('OEBPS/'+f,'<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="'+esc(lang)+'"><head><meta charset="utf-8"/><title>'+
+      esc(s.title||o.title)+'</title><link rel="stylesheet" type="text/css" href="style.css"/></head><body>'+
+      (s.html||'')+'</body></html>');
+    man+='<item id="s'+i+'" href="'+f+'" media-type="application/xhtml+xml"/>';
+    spine+='<itemref idref="s'+i+'"/>';
+    nav+='<li><a href="'+f+'">'+esc(s.title||('Bölmə '+(i+1)))+'</a></li>';
+    np+='<navPoint id="np'+i+'" playOrder="'+(i+1)+'"><navLabel><text>'+esc(s.title||('Bölmə '+(i+1)))+
+      '</text></navLabel><content src="'+f+'"/></navPoint>';
+  });
+  const cover=epubCover(o.title,o.author);
+  if(cover){
+    zip.file('OEBPS/cover.jpg',cover,{base64:true});
+    man+='<item id="cover-img" href="cover.jpg" media-type="image/jpeg" properties="cover-image"/>';
+  }
+  zip.file('OEBPS/nav.xhtml','<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="'+
+    esc(lang)+'"><head><meta charset="utf-8"/><title>İçindəkilər</title><link rel="stylesheet" type="text/css" href="style.css"/></head>'+
+    '<body><nav epub:type="toc" id="toc"><h1>İçindəkilər</h1><ol>'+nav+'</ol></nav></body></html>');
+  zip.file('OEBPS/toc.ncx','<?xml version="1.0" encoding="utf-8"?>\n<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">'+
+    '<head><meta name="dtb:uid" content="'+esc(bid)+'"/><meta name="dtb:depth" content="1"/><meta name="dtb:totalPageCount" content="0"/>'+
+    '<meta name="dtb:maxPageNumber" content="0"/></head><docTitle><text>'+esc(o.title)+'</text></docTitle><navMap>'+np+'</navMap></ncx>');
+  zip.file('OEBPS/content.opf','<?xml version="1.0" encoding="utf-8"?>\n<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="bid">'+
+    '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">'+
+    '<dc:identifier id="bid">'+esc(bid)+'</dc:identifier>'+
+    '<dc:title>'+esc(o.title)+'</dc:title><dc:language>'+esc(lang)+'</dc:language>'+
+    '<dc:creator>'+esc(o.author||'')+'</dc:creator>'+
+    '<dc:source>https://'+esc(lang)+'.wikisource.org</dc:source>'+
+    '<meta property="dcterms:modified">'+mod+'</meta>'+
+    (cover?'<meta name="cover" content="cover-img"/>':'')+
+    '</metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>'+
+    '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>'+
+    '<item id="css" href="style.css" media-type="text/css"/>'+man+'</manifest>'+
+    '<spine toc="ncx">'+spine+'</spine></package>');
+  return zip.generateAsync({type:'blob',mimeType:'application/epub+zip',compression:'DEFLATE'});
+}
+
+async function saveBook(blob,name){
+  const b={id:Date.now()+Math.random().toString(36).slice(2),name:String(name||'Kitab').slice(0,120),
+    type:'epub',blob,added:Date.now()};
+  await idb('readwrite',s=>s.put(b));
+  requestPersist();
+  toast('“'+b.name+'” əlavə olundu',6000,{label:'Aç',fn:()=>openBook(b)});
+  renderLib();
+  return b;
+}
+
+/* ---- Gutenberg (proxy ilə) ---- */
+function proxyUrl(proxy,url){
+  const p=String(proxy||'').trim();
+  if(!p)return url;
+  if(p.indexOf('{url}')>=0)return p.replace('{url}',encodeURIComponent(url));
+  if(/[?&=]$/.test(p))return p+encodeURIComponent(url);
+  return p.replace(/\/$/,'')+'/?url='+encodeURIComponent(url);
+}
+async function fetchBlob(u){
+  const r=await fetch(u,{credentials:'omit',redirect:'follow'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const b=await r.blob();
+  if(b.size<1000)throw new Error('Fayl boşdur');
+  const h=new Uint8Array(await b.slice(0,4).arrayBuffer());
+  if(!(h[0]===0x50&&h[1]===0x4b&&h[2]===0x03&&h[3]===0x04))throw new Error('EPUB deyil');
+  return b;
+}
+async function pgDownload(it){
+  if(!it.dl)throw new Error('EPUB versiyası yoxdur');
+  const proxy=(cfg.proxy||'').trim();
+  if(!proxy){
+    toast('Gutenberg birbaşa yükləməyə icazə vermir — fayl yeni pəncərədə açılır',6000);
+    try{window.open(it.dl,'_blank')}catch{}
+    throw new Error('Proxy lazımdır (Parametrlər → Kataloq)');
+  }
+  setCatStat('Yüklənir…');
+  const blob=await fetchBlob(proxyUrl(proxy,it.dl));
+  setCatStat('EPUB hazırlanır…');
+  await saveBook(blob,it.title);
+  setCatStat('✓ Kitabxanaya əlavə olundu');
+}
+
+/* ---- hadisələr ---- */
+let catT=0;
+$('#cSrc').onclick=e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  CAT.src=b.dataset.s;CAT.items=[];catChips();$('#cRes').innerHTML='';
+  if(CAT.q.trim().length>=2)catSearch();else catHint();
+};
+$('#cQ').oninput=e=>{CAT.q=e.target.value;clearTimeout(catT);catT=setTimeout(catSearch,500)};
+$('#cQ').onkeydown=e=>{if(e.key==='Enter'){clearTimeout(catT);catSearch()}};
+$('#cBack').onclick=()=>{view('lib');renderLib()};
+$('#bCat').onclick=openCat;
+
 /* ================= 7. GÖRÜNÜŞLƏR ================= */
 function view(n){
-  ['lib','reader','dict'].forEach(v=>{$('#'+v).hidden=v!==n});
+  ['lib','reader','dict','cat'].forEach(v=>{$('#'+v).hidden=v!==n});
   hidePop();closeSheet();
   $$('#tabs button').forEach(x=>x.classList.remove('on'));
-  if(n==='lib')$('#bBack').classList.add('on');
+  if(n==='lib'||n==='cat')$('#bBack').classList.add('on');
   if(n==='dict')$('#bDict').classList.add('on');
   if(n!=='reader'){ttsStop();document.body.classList.remove('focus');$('#title').textContent='Oxu'}
 }
@@ -1842,9 +2332,12 @@ function openSettings(){
       '<h4>Ehtiyat nüsxə</h4>'+
       '<div class="okline">Kitab faylları daxil deyil — yalnız lüğət, əlfəcinlər, oxu yerləri və ayarlar.</div>'+
       '<div class="setrow"><button id="bBk">JSON ixrac et</button><button id="bRs">Bərpa et</button><button id="bCsv">CSV</button></div>'+
+      '<h4>Kataloq</h4>'+
+      '<div class="fld"><label>Proxy serveri (Gutenberg üçün)</label><input id="sProxy" type="url" inputmode="url" placeholder="https://…workers.dev/?url=" value="'+esc(cfg.proxy||'')+'"></div>'+
+      '<div class="okline">Vikimənbə kitabları proxy-siz yüklənir. Gutenberg-in EPUB faylları üçün kiçik proxy lazımdır — README-də “Proxy” bölümünə bax.</div>'+
       '<h4>Tətbiq</h4>'+
       '<div class="setrow"><button id="bUpd">Yeniləmələri yoxla</button></div>'+
-      '<div class="okline">Oxu v3.0 · '+esc(location.host||'lokal fayl')+'</div>';
+      '<div class="okline">Oxu v3.2 · '+esc(location.host||'lokal fayl')+'</div>';
     const save=()=>{SV('cfg',cfg);applyTheme()};
     $('#sSrc').onchange=e=>{cfg.src=e.target.value;save()};
     $('#sDst').onchange=e=>{cfg.dst=e.target.value;save()};
@@ -1876,6 +2369,7 @@ function openSettings(){
     };
     $('#stClear').onclick=()=>{try{localStorage.removeItem('tcache')}catch{}tc={};for(const k in cache)delete cache[k];toast('Tərcümə keşi silindi')};
     $('#bCsv').onclick=exportCsv;
+    $('#sProxy').onchange=e=>{cfg.proxy=e.target.value.trim();SV('cfg',cfg);toast(cfg.proxy?'Proxy saxlanıldı':'Proxy silindi')};
     $('#bBk').onclick=exportBackup;
     $('#bRs').onclick=()=>{
       const inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';
