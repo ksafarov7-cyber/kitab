@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Oxu">
+  <rect width="512" height="512" rx="96" fill="#14181a"/>
+  <path d="M96 130c60-18 120-10 160 20v236c-40-30-100-38-160-20z" fill="#e9efe9"/>
+  <path d="M416 130c-60-18-120-10-160 20v236c40-30 100-38 160-20z" fill="#e9efe9"/>
+  <rect x="290" y="190" width="90" height="26" rx="7" fill="#f2c14e"/>
+</svg>

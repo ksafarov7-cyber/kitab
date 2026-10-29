@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "Oxu — kitab oxuyucu",
+  "short_name": "Oxu",
+  "description": "PDF, EPUB və TXT kitablar üçün oflayn oxuyucu, söz lüğəti və təkrar testləri.",
+  "lang": "az",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#14181a",
+  "theme_color": "#14181a",
+  "categories": ["books", "education", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
