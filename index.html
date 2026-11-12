@@ -316,7 +316,7 @@ body.focus #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 20px)}
     <h2>Kitabxana</h2>
     <p class="sub">PDF · EPUB · TXT — kitablar yalnız bu cihazda saxlanılır</p>
     <div class="addrow"><button class="fill" id="bAdd">+ Kitab əlavə et</button><button id="bCat">Kataloq</button></div>
-    <input type="file" id="file" accept=".pdf,.epub,.txt,application/pdf,application/epub+zip,text/plain" multiple hidden>
+    <input type="file" id="file" multiple hidden>
     <div id="cont"></div>
     <div id="stats"></div>
     <input id="lq" type="search" placeholder="Kitab axtar…" autocomplete="off">
@@ -467,6 +467,8 @@ if(cfg.engine!=='ai')cfg.engine='google';
 if(!cfg.gmodel||typeof cfg.gmodel!=='string')cfg.gmodel=DEF.gmodel;
 /* Gemini API açarı cfg-dən ayrı saxlanılır ki, ehtiyat nüsxəyə düşməsin */
 function gKey(){try{return String(localStorage.getItem('gemkey')||'').trim()}catch{return String(mem.gemkey||'').trim()}}
+function gProv(){try{const o=JSON.parse(localStorage.getItem('gemprov')||'null');return o&&o.k===gKey().slice(-8)?o.p:''}catch{return ''}}
+function setGProv(p){try{localStorage.setItem('gemprov',JSON.stringify({k:gKey().slice(-8),p}))}catch{}}
 function setGKey(v){v=String(v||'').trim();mem.gemkey=v;try{v?localStorage.setItem('gemkey',v):localStorage.removeItem('gemkey')}catch{}}
 function THEMES_OK(x){return ['light','sepia','dark','black'].indexOf(x)>=0}
 const FONTS={serif:'Charter,"Iowan Old Style",Georgia,serif',georgia:'Georgia,"Times New Roman",serif',sans:'-apple-system,"SF Pro Text",Inter,system-ui,sans-serif',mono:'"SF Mono",Menlo,Courier,monospace'};
@@ -673,17 +675,41 @@ $('#lf').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;libF=b.datas
 $('#ls').onchange=e=>{libS=e.target.value;SV('libS',libS);renderLib()};
 $('#lq').oninput=e=>{libQ=e.target.value.trim().toLowerCase();clearTimeout(libT);libT=setTimeout(renderLib,180)};
 $('#bAdd').onclick=()=>$('#file').click();
+/* fayl növünü uzantı, MIME və ilk baytlara görə tap (telefonlarda ad bəzən uzantısız gəlir) */
+async function sniffType(f){
+  const ext=(f.name.split('.').pop()||'').toLowerCase(),mt=String(f.type||'').toLowerCase();
+  if(['pdf','epub','txt'].indexOf(ext)>=0)return ext;
+  if(mt==='application/pdf')return 'pdf';
+  if(mt==='application/epub+zip')return 'epub';
+  if(mt.indexOf('text/plain')===0)return 'txt';
+  try{
+    const h=new Uint8Array(await f.slice(0,512).arrayBuffer());
+    if(h[0]===0x25&&h[1]===0x50&&h[2]===0x44&&h[3]===0x46)return 'pdf';
+    if(h[0]===0x50&&h[1]===0x4b&&h[2]===0x03&&h[3]===0x04)return 'epub';
+    let bad=0;for(const x of h)if(x<9||(x>13&&x<32))bad++;
+    if(h.length&&bad/h.length<.02)return 'txt';
+  }catch{}
+  return '';
+}
+const MIMES={pdf:'application/pdf',epub:'application/epub+zip',txt:'text/plain'};
 $('#file').onchange=async e=>{
-  const files=[...e.target.files],ok=[];
+  const files=[...e.target.files],ok=[];let bad='';
   for(const f of files){
-    const ext=(f.name.split('.').pop()||'').toLowerCase();
-    if(['pdf','epub','txt'].indexOf(ext)<0)continue;
+    const nm=f.name||'Kitab';
     try{
-      await idb('readwrite',s=>s.put({id:Date.now()+Math.random().toString(36).slice(2),name:f.name.replace(/\.\w+$/,''),type:ext,blob:f,added:Date.now()}));
+      const ext=await sniffType(f);
+      if(!ext){toast('“'+nm+'” dəstəklənmir — yalnız PDF, EPUB, TXT',4500);continue}
+      /* fayl referansını yox, məzmunun öz nüsxəsini saxla (iOS/Android-də referans bəzən yazılmır) */
+      const blob=new Blob([await f.arrayBuffer()],{type:MIMES[ext]});
+      await idb('readwrite',s=>s.put({id:Date.now()+Math.random().toString(36).slice(2),name:nm.replace(/\.\w+$/,'')||'Kitab',type:ext,blob,added:Date.now()}));
       ok.push(ext);
-    }catch(err){toast('“'+f.name+'” əlavə olunmadı')}
+    }catch(err){
+      const m=String((err&&(err.message||err.name))||err||'');
+      bad=/quota/i.test(m)?'yaddaş dolub':/securit|denied|indexeddb|object stores/i.test(m)?'brauzer yaddaşı açılmadı (gizli rejimdə olma)':/memory|allocation/i.test(m)?'fayl çox böyükdür':m;
+      toast('“'+nm+'” əlavə olunmadı: '+bad,6000);
+    }
   }
-  e.target.value='';
+  try{e.target.value=''}catch{}
   if(ok.length){requestPersist();toast(ok.length+' kitab əlavə olundu');renderLib()}
 };
 /* ================= 6b. KATALOQ (pulsuz kitablar) ================= */
@@ -1959,14 +1985,20 @@ function gemErr(status,j){
   e.status=status;e.fatal=(status===401||status===403||(status===400&&/API key|API_KEY/i.test(m)));
   return e;
 }
-async function gemCall(model,body,key,ms){
+let gemProv='ai';
+const VERTEX_BASE='https://aiplatform.googleapis.com/v1/publishers/google/models/';
+async function gemCall(model,body,key,ms,prov){
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),ms||25000);
+  const url=(prov==='vertex'?VERTEX_BASE+encodeURIComponent(model):GEM_BASE+'models/'+encodeURIComponent(model))+':generateContent';
   try{
-    const r=await fetch(GEM_BASE+'models/'+encodeURIComponent(model)+':generateContent',{
-      method:'POST',signal:ctl.signal,
-      headers:{'Content-Type':'application/json','x-goog-api-key':key},
-      body:JSON.stringify(body)
-    });
+    let r;
+    try{
+      r=await fetch(url,{method:'POST',signal:ctl.signal,
+        headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)});
+    }catch(e){
+      if(e.name==='AbortError')throw new Error('Gemini vaxtında cavab vermədi');
+      const ne=new Error('Şəbəkə xətası (internet yoxdur və ya brauzer sorğunu blokladı)');ne.netfail=true;throw ne;
+    }
     let j=null;try{j=await r.json()}catch{}
     if(!r.ok)throw gemErr(r.status,j);
     const c=j&&j.candidates&&j.candidates[0];
@@ -1976,30 +2008,42 @@ async function gemCall(model,body,key,ms){
       throw new Error(why?'Cavab boşdur ('+why+')':'Cavab boşdur');
     }
     return txt;
-  }catch(e){
-    if(e.name==='AbortError')throw new Error('Gemini vaxtında cavab vermədi');
-    throw e;
   }finally{clearTimeout(to)}
 }
-/* model → 404/429/5xx olarsa növbəti pulsuz modelə keç */
-async function gemGenerate(body,key){
+/* bir ünvan üçün: model → 404/429/5xx olarsa növbəti pulsuz modelə keç */
+async function gemOn(prov,body,key){
   const chain=[cfg.gmodel,...GEM_FALLBACK.filter(m=>m!==cfg.gmodel)];
   let last=null;
   for(const model of chain){
     const canThink0=/gemini-2\.5-flash/.test(model);
     for(const noThink of canThink0?[true,false]:[false]){
       const b=JSON.parse(JSON.stringify(body));
-      if(noThink)b.generationConfig.thinkingConfig={thinkingBudget:0};  /* sürətli, "düşünmədən" */
-      try{return await gemCall(model,b,key)}
+      if(noThink)b.generationConfig.thinkingConfig={thinkingBudget:0};
+      try{return await gemCall(model,b,key,0,prov)}
       catch(e){
         last=e;
-        if(e.fatal)throw e;                                   /* açar xətası — başqa model kömək etməz */
+        if(e.fatal||e.netfail)throw e;                        /* açar / şəbəkə xətası — başqa model kömək etməz */
         if(e.status===400&&noThink)continue;                  /* thinkingConfig qəbul olunmadı → onsuz yenidən */
         break;
       }
     }
   }
   throw last||new Error('Gemini alınmadı');
+}
+/* "AQ." açarları Vertex AI (express) açarlarıdır: əvvəl Vertex, alınmasa Gemini API. Qalan açarlar yalnız Gemini API */
+async function gemGenerate(body,key){
+  const aq=/^AQ\./.test(key);
+  const first=aq?(gProv()||'vertex'):'ai';
+  const provs=aq?[first,first==='vertex'?'ai':'vertex']:['ai'];
+  const errs=[];
+  for(const prov of provs){
+    try{const t=await gemOn(prov,body,key);gemProv=prov;setGProv(prov);return t}
+    catch(e){
+      errs.push((prov==='vertex'?'Vertex: ':'Gemini API: ')+e.message);
+      if(!(e.fatal||e.netfail||e.status===404)||provs.length===1)throw e;
+    }
+  }
+  const ex=new Error(errs.join(' · '));ex.fatal=true;throw ex;
 }
 async function aiTr(text,ctx){
   const key=gKey();
@@ -2559,7 +2603,7 @@ function openSettings(){
       '<div class="fld"><label>Gemini API açarı</label><div class="rowsel"><input id="sGKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="AIza…" value="'+esc(gKey())+'"><button class="icb" id="sGShow" title="Göstər / gizlət" aria-label="Göstər / gizlət">👁</button></div></div>'+
       '<div class="fld"><label>Model</label><div class="rowsel"><select id="sGModel"></select><button class="icb" id="sGTest" title="Açarı yoxla və modelləri yenilə">Yoxla</button></div></div>'+
       '<div class="aistat" id="sGStat">'+(gKey()?'Açar saxlanılıb.':'Açar yoxdur.')+'</div>'+
-      '<div class="okline">Pulsuz açar: aistudio.google.com/apikey → “Create API key”. Açar yalnız bu cihazda saxlanılır və ehtiyat nüsxəyə daxil edilmir. AI seçiləndə seçilmiş söz və cümlələr Gemini-yə göndərilir; pulsuz planda Google bu məzmunu məhsullarını yaxşılaşdırmaq üçün istifadə edə bilər.</div>'+
+      '<div class="okline">Açar: aistudio.google.com/apikey (AIza…) və ya Vertex express (AQ.…) — ikisi də dəstəklənir. Açar yalnız bu cihazda saxlanılır və ehtiyat nüsxəyə daxil edilmir. AI seçiləndə seçilmiş söz və cümlələr Gemini-yə göndərilir; pulsuz planda Google bu məzmunu məhsullarını yaxşılaşdırmaq üçün istifadə edə bilər.</div>'+
       '<h4>Oxu</h4>'+
       '<div class="fld"><label>Şrift</label><select id="sFont">'+Object.keys(FN).map(k=>'<option value="'+k+'"'+(k===cfg.font?' selected':'')+'>'+FN[k]+'</option>').join('')+'</select></div>'+
       '<div class="fld"><label>Tema</label><select id="sTheme">'+THEMES.map(t=>'<option value="'+t[0]+'"'+(t[0]===cfg.theme?' selected':'')+'>'+t[1]+'</option>').join('')+'</select></div>'+
@@ -2593,7 +2637,7 @@ function openSettings(){
     };
     $('#sGKey').onchange=e=>{
       setGKey(e.target.value);
-      setSt(!gKey()?'Açar silindi.':/^AQ\./.test(gKey())?'Diqqət: “AQ.” ilə başlayan açar çox vaxt Vertex AI üçündür və Gemini API-də 403 verir. “Yoxla” ilə sına; alınmasa AI Studio-dan yeni açar yarat.':'Açar saxlanıldı. “Yoxla” düyməsi ilə sına.');
+      setSt(!gKey()?'Açar silindi.':/^AQ\./.test(gKey())?'“AQ.” açarı tanındı — Vertex express rejimi ilə işləyəcək. “Yoxla” ilə sına.':'Açar saxlanıldı. “Yoxla” düyməsi ilə sına.');
       if(!gKey()&&cfg.engine==='ai'){cfg.engine='google';save();$('#sEng').value='google'}
     };
     $('#sGShow').onclick=()=>{const i=$('#sGKey');i.type=i.type==='password'?'text':'password'};
@@ -2603,12 +2647,15 @@ function openSettings(){
       if(!key){setSt('Əvvəlcə API açarını yaz.','err');return}
       setSt('Yoxlanılır…');
       try{
-        const list=await listGemModels(key);
-        SV('gmodels',list);
-        if(list.length&&!list.includes(cfg.gmodel)&&!GEM_FALLBACK.includes(cfg.gmodel)){cfg.gmodel=list[0];save()}
-        fillModels(list);
+        let list=[];
+        if(!/^AQ\./.test(key)||gProv()==='ai'){try{list=await listGemModels(key)}catch{}}
+        if(list.length){
+          SV('gmodels',list);
+          if(!list.includes(cfg.gmodel)&&!GEM_FALLBACK.includes(cfg.gmodel)){cfg.gmodel=list[0];save()}
+          fillModels(list);
+        }
         const r=await aiTr('Hello','Hello world.');
-        setSt('✓ İşləyir. Test: Hello → '+r.t+' · '+list.length+' model tapıldı','ok');
+        setSt('✓ İşləyir ('+(gemProv==='vertex'?'Vertex express':'Gemini API')+'). Test: Hello → '+r.t+(list.length?' · '+list.length+' model tapıldı':''),'ok');
       }catch(e){setSt('✗ '+(e.message||e),'err')}
     };
     $('#sSrc').onchange=e=>{cfg.src=e.target.value;save()};
