@@ -41,7 +41,7 @@ section{position:absolute;inset:0 0 calc(88px + env(safe-area-inset-bottom,0px))
 small{color:var(--mute)}
 progress,button{font-family:inherit}
 h2,h3,h4,p,ul,ol{margin-top:0}
-input[type=search],input[type=text],input[type=number]{font:inherit;font-size:16px;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;width:100%;-webkit-appearance:none;appearance:none}
+input[type=search],input[type=text],input[type=number],input[type=password],input[type=url]{font:inherit;font-size:16px;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;width:100%;-webkit-appearance:none;appearance:none}
 select{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 
 /* ---------- kitabxana ---------- */
@@ -210,6 +210,13 @@ body.focus #pbar{position:absolute;top:0;left:0;right:0;z-index:3}
 #pa{flex:none;display:flex;gap:4px;flex-wrap:wrap}
 #pa button{border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:13px}
 #pa .fill{border-color:var(--acc)}
+#pa #pAi{font-weight:600}
+#pa #pAi.on{background:var(--acc);color:var(--onacc);border-color:var(--acc)}
+#pm .aitag{color:var(--acc)}
+.rowsel input{flex:1}
+.aistat{font:12px/1.5 var(--mono);margin:-6px 0 14px;word-break:break-word;color:var(--mute)}
+.aistat.ok{color:#2e8b57}.aistat.err{color:#c0392b}
+body.dragsel #epubView,body.dragsel #pdfView,body.dragsel #txtView{touch-action:none}
 
 /* ---------- lüğət ---------- */
 #dict{padding:20px 20px 40px;max-width:760px;margin:auto;left:0;right:0}
@@ -406,6 +413,7 @@ body.focus #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 20px)}
   <div id="pm"></div>
   <div id="pa">
     <button id="pStar" class="fill">☆ Lüğətə əlavə et</button>
+    <button id="pAi" title="Süni intellektlə tərcümə et">✦ AI</button>
     <button id="pSay" title="Səsləndir">🔊</button>
     <button id="pCopy" title="Kopyala">⧉</button>
     <button id="pX" aria-label="Bağla">✕</button>
@@ -446,7 +454,7 @@ function toast(msg,ms=2800,action){
 function requestPersist(){try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch{}}
 
 /* ================= 2. AYARLAR ================= */
-const DEF={src:'Autodetect',dst:'az',size:110,theme:'light',font:'serif',dim:0,margin:1,lh:1.7,rate:1};
+const DEF={src:'Autodetect',dst:'az',size:110,theme:'light',font:'serif',dim:0,margin:1,lh:1.7,rate:1,engine:'google',gmodel:'gemini-2.5-flash'};
 const saved=LS('cfg',{});
 let cfg=Object.assign({},DEF,saved||{});
 if(!cfg.theme)cfg.theme=saved&&saved.dark?'dark':'light';
@@ -455,6 +463,11 @@ cfg.size=clamp(+cfg.size||110,70,220);
 cfg.margin=clamp(Number(cfg.margin)||0,0,2);
 cfg.lh=clamp(+cfg.lh||1.7,1.4,2.1);
 cfg.rate=clamp(+cfg.rate||1,0.5,2);
+if(cfg.engine!=='ai')cfg.engine='google';
+if(!cfg.gmodel||typeof cfg.gmodel!=='string')cfg.gmodel=DEF.gmodel;
+/* Gemini API açarı cfg-dən ayrı saxlanılır ki, ehtiyat nüsxəyə düşməsin */
+function gKey(){try{return String(localStorage.getItem('gemkey')||'').trim()}catch{return String(mem.gemkey||'').trim()}}
+function setGKey(v){v=String(v||'').trim();mem.gemkey=v;try{v?localStorage.setItem('gemkey',v):localStorage.removeItem('gemkey')}catch{}}
 function THEMES_OK(x){return ['light','sepia','dark','black'].indexOf(x)>=0}
 const FONTS={serif:'Charter,"Iowan Old Style",Georgia,serif',georgia:'Georgia,"Times New Roman",serif',sans:'-apple-system,"SF Pro Text",Inter,system-ui,sans-serif',mono:'"SF Mono",Menlo,Courier,monospace'};
 const FN={serif:'Charter',georgia:'Georgia',sans:'Sans',mono:'Mono'};
@@ -1809,16 +1822,78 @@ function toggleFocus(){
   if(on&&!focusHinted){focusHinted=true;toast('Fokus rejimi — çıxmaq üçün boş yerə toxun',2600)}
   if(ps)hidePop();
 }
+let dragSel=false;
 function bind(target){
   if(!target)return;
-  let p=null;
-  target.addEventListener('pointerdown',e=>{p=[e.clientX,e.clientY]});
+  let p=null,timer=0,drag=null,raf=0,lastPt=null,kind='';
+  const stopTimer=()=>{clearTimeout(timer);timer=0};
+  function startDrag(x,y){
+    const h=pick(x,y);
+    if(!h)return false;                       /* boş yerdə basıb saxlama = adi toxunuş */
+    hidePop();
+    drag={unit:h.unit,c:h.c,anchor:h.i};
+    S={unit:h.unit,a:h.i,b:h.i};
+    dragSel=true;document.body.classList.add('dragsel');
+    try{if(navigator.vibrate)navigator.vibrate(12)}catch{}
+    paintDrag();
+    return true;
+  }
+  function paintDrag(){
+    if(!drag||!S)return;
+    const c=drag.unit._b||drag.c,w=c.words;
+    if(!w[S.a]||!w[S.b])return;
+    highlight(selRects(c,w[S.a].s,w[S.b].e));
+  }
+  function moveDrag(){
+    raf=0;if(!drag||!lastPt)return;
+    const h=pick(lastPt[0],lastPt[1]);
+    if(!h||h.unit!==drag.unit)return;          /* söz arası boşluqda əvvəlki seçim qalır */
+    const a=Math.min(drag.anchor,h.i),b=Math.max(drag.anchor,h.i);
+    if(a===S.a&&b===S.b)return;
+    S.a=a;S.b=b;paintDrag();
+  }
+  function endDrag(finish){
+    stopTimer();
+    if(raf){cancelAnimationFrame(raf);raf=0}
+    const was=!!drag;
+    if(drag&&lastPt)moveDrag();
+    const keep=drag?{unit:drag.unit}:null;
+    drag=null;dragSel=false;document.body.classList.remove('dragsel');
+    /* swipe hadisəsi hələ gəlir — bayrağı bir az gec sıfırla */
+    if(was){dragSel=true;setTimeout(()=>{dragSel=false},350)}
+    if(was&&finish&&S&&keep)setTimeout(()=>{try{show(S.b)}catch(x){console.warn(x)}},0);
+    else if(was){clearHL();S=null}
+  }
+  target.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    p=[e.clientX,e.clientY];lastPt=p;kind=e.pointerType;drag=null;stopTimer();
+    if(kind!=='mouse')timer=setTimeout(()=>{timer=0;if(p&&!startDrag(p[0],p[1])){/* söz tapılmadı */}},320);
+  });
+  target.addEventListener('pointermove',e=>{
+    if(!p)return;
+    lastPt=[e.clientX,e.clientY];
+    const far=Math.hypot(e.clientX-p[0],e.clientY-p[1]);
+    if(drag){
+      if(!raf)raf=requestAnimationFrame(moveDrag);
+      return;
+    }
+    if(kind==='mouse'&&far>6&&e.buttons===1){startDrag(p[0],p[1]);return}
+    if(far>10)stopTimer();                      /* sürüşdürmə başladı — uzun basma deyil */
+  });
   target.addEventListener('pointerup',e=>{
     if(!p)return;
-    const dx=e.clientX-p[0],dy=e.clientY-p[1];p=null;
+    const dx=e.clientX-p[0],dy=e.clientY-p[1];
+    lastPt=[e.clientX,e.clientY];
+    if(drag){p=null;endDrag(true);return}
+    stopTimer();p=null;
     if(Math.hypot(dx,dy)<10)setTimeout(()=>{try{tap(e)}catch(x){console.warn(x)}},20);
   });
-  target.addEventListener('pointercancel',()=>{p=null});
+  target.addEventListener('pointercancel',()=>{p=null;if(drag)endDrag(true);else stopTimer()});
+  /* seçim zamanı səhifənin sürüşməsinin qarşısını al */
+  target.addEventListener('touchmove',e=>{if(drag&&e.cancelable)e.preventDefault()},{passive:false});
+  /* uzun basanda brauzerin kontekst menyusu / mətn seçimi çıxmasın */
+  target.addEventListener('contextmenu',e=>e.preventDefault());
+  target.addEventListener('selectstart',e=>e.preventDefault());
 }
 ['#epubView','#pdfView','#txtView'].forEach(q=>bind($(q)));
 
@@ -1868,7 +1943,110 @@ function saveTc(k,v){
   if(ks.length>1500)ks.slice(0,500).forEach(x=>delete tc[x]);
   SV('tcache',tc);
 }
-async function tr(text){
+
+/* ---- Gemini (süni intellekt) ---- */
+const GEM_BASE='https://generativelanguage.googleapis.com/v1beta/';
+const GEM_FALLBACK=['gemini-2.5-flash','gemini-flash-latest','gemini-2.5-flash-lite','gemini-flash-lite-latest'];
+const langName=c=>{const L=LANGS.find(l=>l[0]===c);return L?L[1]+' ('+c+')':c};
+function gemErr(status,j){
+  const m=(j&&j.error&&j.error.message)||'';
+  const e=new Error(status===400&&/API key|API_KEY/i.test(m)?'API açarı yanlışdır':
+    status===401||status===403?'API açarı icazəsizdir (403)':
+    status===404?'Model tapılmadı':
+    status===429?'Pulsuz limit doldu (429)':
+    status>=500?'Gemini serveri cavab vermir ('+status+')':
+    (m||'HTTP '+status).slice(0,140));
+  e.status=status;e.fatal=(status===401||status===403||(status===400&&/API key|API_KEY/i.test(m)));
+  return e;
+}
+async function gemCall(model,body,key,ms){
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),ms||25000);
+  try{
+    const r=await fetch(GEM_BASE+'models/'+encodeURIComponent(model)+':generateContent',{
+      method:'POST',signal:ctl.signal,
+      headers:{'Content-Type':'application/json','x-goog-api-key':key},
+      body:JSON.stringify(body)
+    });
+    let j=null;try{j=await r.json()}catch{}
+    if(!r.ok)throw gemErr(r.status,j);
+    const c=j&&j.candidates&&j.candidates[0];
+    const txt=c&&c.content&&c.content.parts?c.content.parts.map(p=>p.text||'').join(''):'';
+    if(!txt){
+      const why=(j&&j.promptFeedback&&j.promptFeedback.blockReason)||(c&&c.finishReason)||'';
+      throw new Error(why?'Cavab boşdur ('+why+')':'Cavab boşdur');
+    }
+    return txt;
+  }catch(e){
+    if(e.name==='AbortError')throw new Error('Gemini vaxtında cavab vermədi');
+    throw e;
+  }finally{clearTimeout(to)}
+}
+/* model → 404/429/5xx olarsa növbəti pulsuz modelə keç */
+async function gemGenerate(body,key){
+  const chain=[cfg.gmodel,...GEM_FALLBACK.filter(m=>m!==cfg.gmodel)];
+  let last=null;
+  for(const model of chain){
+    const canThink0=/gemini-2\.5-flash/.test(model);
+    for(const noThink of canThink0?[true,false]:[false]){
+      const b=JSON.parse(JSON.stringify(body));
+      if(noThink)b.generationConfig.thinkingConfig={thinkingBudget:0};  /* sürətli, "düşünmədən" */
+      try{return await gemCall(model,b,key)}
+      catch(e){
+        last=e;
+        if(e.fatal)throw e;                                   /* açar xətası — başqa model kömək etməz */
+        if(e.status===400&&noThink)continue;                  /* thinkingConfig qəbul olunmadı → onsuz yenidən */
+        break;
+      }
+    }
+  }
+  throw last||new Error('Gemini alınmadı');
+}
+async function aiTr(text,ctx){
+  const key=gKey();
+  if(!key)throw new Error('Gemini API açarı yoxdur');
+  text=String(text).slice(0,6000);
+  const word=!/\s/.test(text);
+  const src=cfg.src==='Autodetect'?'detect automatically':langName(cfg.src);
+  const sys='You are a precise translation engine inside an e-book reader. '+
+    'Translate the given text from the source language into the target language. Keep meaning, tone and punctuation; do not add commentary, do not explain inside the translation, never refuse. '+
+    'If a single word is given, use the surrounding sentence (if provided) to choose the right meaning, and give the most fitting translation first. '+
+    'Return ONLY JSON matching the schema.';
+  const parts=['Source language: '+src,'Target language: '+langName(cfg.dst),'Text to translate:\n"""\n'+text+'\n"""'];
+  if(word&&ctx&&ctx.length>text.length)parts.push('Sentence the word appears in (context only, translate just the word):\n"""\n'+String(ctx).slice(0,500)+'\n"""');
+  parts.push(word?'Fill "alternatives" with up to 4 other common translations (short) and "note" with a very short usage/grammar remark in the target language (max 12 words, or empty).':'Leave "alternatives" empty and "note" empty.');
+  const body={
+    systemInstruction:{parts:[{text:sys}]},
+    contents:[{role:'user',parts:[{text:parts.join('\n\n')}]}],
+    generationConfig:{
+      temperature:.2,maxOutputTokens:Math.min(8192,Math.max(512,text.length*3+300)),
+      responseMimeType:'application/json',
+      responseSchema:{type:'OBJECT',properties:{
+        translation:{type:'STRING'},
+        source_lang:{type:'STRING'},
+        alternatives:{type:'ARRAY',items:{type:'STRING'}},
+        note:{type:'STRING'}
+      },required:['translation','source_lang']}
+    }
+  };
+  const raw=await gemGenerate(body,key);
+  let j;try{j=JSON.parse(raw.replace(/^```json\s*|```$/g,'').trim())}catch{j=null}
+  const t=j&&typeof j.translation==='string'?j.translation.trim():'';
+  if(!t)throw new Error('Cavab oxunmadı');
+  const alts=word&&Array.isArray(j.alternatives)?j.alternatives.map(x=>String(x).trim()).filter(x=>x&&x.toLowerCase()!==t.toLowerCase()).slice(0,4):[];
+  const sl=String(j.source_lang||'').trim().toLowerCase().replace('_','-');
+  return{t,alts:alts.length?[{pos:'',w:alts}]:[],src:/^[a-z]{2,3}(-[a-z]{2,4})?$/.test(sl)?sl:'',note:word?String(j.note||'').trim().slice(0,160):'',ai:true};
+}
+async function listGemModels(key){
+  const r=await fetch(GEM_BASE+'models?pageSize=200',{headers:{'x-goog-api-key':key}});
+  let j=null;try{j=await r.json()}catch{}
+  if(!r.ok)throw gemErr(r.status,j);
+  return (j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent'))
+    .map(m=>String(m.name||'').replace(/^models\//,''))
+    .filter(n=>/^gemini-.*flash/.test(n)&&!/image|tts|live|audio|embedding|robotics|computer|thinking-exp|preview-\d{2}-\d{2}/.test(n));
+}
+
+/* ---- standart mühərrik (Google Translate → MyMemory → oflayn) ---- */
+async function trStd(text){
   const k=cfg.src+'|'+cfg.dst+'|'+(/\s/.test(text)?text:text.toLowerCase());
   if(cache[k])return cache[k];
   if(tc[k])return cache[k]=tc[k];
@@ -1888,19 +2066,50 @@ async function tr(text){
   }
   saveTc(k,res);return cache[k]=res;
 }
+/* hansı mühərrik: opts.engine verilməyibsə menyudakı seçim */
+async function tr(text,ctx,opts){
+  const eng=(opts&&opts.engine)||cfg.engine;
+  if(eng==='ai'&&gKey()){
+    const word=!/\s/.test(text);
+    const k='ai|'+cfg.src+'|'+cfg.dst+'|'+(word?text.toLowerCase()+'|'+String(ctx||'').slice(0,120).toLowerCase():text);
+    if(cache[k])return cache[k];
+    if(tc[k])return cache[k]=tc[k];
+    if(!navigator.onLine){
+      try{return await trStd(text)}catch{throw new Error('internet yoxdur')}
+    }
+    try{
+      const res=await aiTr(text,ctx);
+      saveTc(k,res);return cache[k]=res;
+    }catch(e){
+      if(opts&&opts.noFallback)throw e;
+      const r=await trStd(text);          /* AI alınmadısa standart tərcümə göstər */
+      return Object.assign({},r,{warn:'AI alınmadı: '+(e.message||e)+' — standart tərcümə'});
+    }
+  }
+  if(eng==='ai'&&!gKey()&&!(opts&&opts.noFallback)){
+    const r=await trStd(text);
+    return Object.assign({},r,{warn:'Gemini API açarı yoxdur (Parametrlər → Süni intellekt)'});
+  }
+  return trStd(text);
+}
 function showPop(text,rect,ctx){
   lastShow=Date.now();
   ps={text,ctx,t:'',r:{l:rect.left,rt:rect.right,tp:rect.top,b:rect.bottom}};
   $('#pw').textContent=text;$('#pt').textContent='…';$('#pm').textContent='';$('#pop').hidden=false;
   starState();place();
-  tr(text).then(r=>{
+  const engNow=cfg.engine;
+  setAiBtn(engNow==='ai'&&!!gKey());
+  tr(text,ctx).then(r=>{
     if(!ps||ps.text!==text)return;
     ps.t=r.t;ps.lang=r.src||(cfg.src!=='Autodetect'?cfg.src:'');if(ps.lang)lastLang=ps.lang;
     $('#pt').textContent=r.t;
     const m=[];
+    if(r.ai)m.push('✦ Gemini');
+    if(r.warn)m.push(r.warn);
     if(r.off)m.push('Oflayn (kitab paketi)');
     if(cfg.src==='Autodetect'&&r.src){const L=LANGS.find(l=>l[0]===r.src);m.push('Dil: '+(L?L[1]:r.src))}
     if(!/\s/.test(text)&&r.alts&&r.alts.length)m.push(r.alts.map(a=>(a.pos?a.pos+': ':'')+a.w.join(', ')).join('\n'));
+    if(r.note)m.push(r.note);
     $('#pm').textContent=m.join('\n');place();
     if(!/\s/.test(text)&&(!ps.lang||/^en/i.test(ps.lang))){
       defFetch(text).then(dd=>{
@@ -1940,6 +2149,27 @@ $('#pStar').onclick=()=>{
   if(i<0){const w=dict[0];if(!w.fx&&!/\s/.test(w.w))enrich(w)}
 };
 $('#pX').onclick=hidePop;
+function setAiBtn(on){const b=$('#pAi');if(b){b.classList.toggle('on',!!on);b.textContent=on?'✦ AI ✓':'✦ AI'}}
+/* bu seçimi qarşı mühərriklə (AI ↔ standart) bir dəfəlik tərcümə et */
+$('#pAi').onclick=async()=>{
+  if(!ps)return;
+  const text=ps.text,ctx=ps.ctx,useAi=!$('#pAi').classList.contains('on');
+  if(useAi&&!gKey()){toast('Əvvəlcə Parametrlər → Süni intellekt bölməsində Gemini API açarını yaz',4200,{label:'Aç',fn:openSettings});return}
+  $('#pt').textContent='…';setAiBtn(useAi);
+  try{
+    const r=await tr(text,ctx,{engine:useAi?'ai':'google',noFallback:useAi});
+    if(!ps||ps.text!==text)return;
+    ps.t=r.t;$('#pt').textContent=r.t;
+    const m=[];
+    if(r.ai)m.push('✦ Gemini');
+    if(!/\s/.test(text)&&r.alts&&r.alts.length)m.push(r.alts.map(a=>(a.pos?a.pos+': ':'')+a.w.join(', ')).join('\n'));
+    if(r.note)m.push(r.note);
+    $('#pm').textContent=m.join('\n');place();
+  }catch(e){
+    if(!ps||ps.text!==text)return;
+    setAiBtn(false);$('#pt').textContent='AI alınmadı: '+(e.message||e);place();
+  }
+};
 $('#pSay').onclick=()=>ps&&say(ps.text,ps.lang);
 $('#pCopy').onclick=async()=>{
   if(!ps||!ps.t)return;
@@ -2321,6 +2551,15 @@ function openSettings(){
       '<h4>Dillər</h4>'+
       '<div class="fld"><label>Oxuduğum dil</label><select id="sSrc">'+langOpts(false,cfg.src)+'</select></div>'+
       '<div class="fld"><label>Tərcümə dili</label><div class="rowsel"><select id="sDst">'+langOpts(true,cfg.dst)+'</select><button class="icb" id="sSwap" title="Dilləri dəyiş" aria-label="Dilləri dəyiş">⇄</button></div></div>'+
+      '<h4>Süni intellekt (Gemini)</h4>'+
+      '<div class="fld"><label>Tərcümə mühərriki</label><select id="sEng">'+
+        '<option value="google"'+(cfg.engine!=='ai'?' selected':'')+'>Standart (Google Translate)</option>'+
+        '<option value="ai"'+(cfg.engine==='ai'?' selected':'')+'>Süni intellekt (Gemini)</option>'+
+      '</select></div>'+
+      '<div class="fld"><label>Gemini API açarı</label><div class="rowsel"><input id="sGKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="AIza…" value="'+esc(gKey())+'"><button class="icb" id="sGShow" title="Göstər / gizlət" aria-label="Göstər / gizlət">👁</button></div></div>'+
+      '<div class="fld"><label>Model</label><div class="rowsel"><select id="sGModel"></select><button class="icb" id="sGTest" title="Açarı yoxla və modelləri yenilə">Yoxla</button></div></div>'+
+      '<div class="aistat" id="sGStat">'+(gKey()?'Açar saxlanılıb.':'Açar yoxdur.')+'</div>'+
+      '<div class="okline">Pulsuz açar: aistudio.google.com/apikey → “Create API key”. Açar yalnız bu cihazda saxlanılır və ehtiyat nüsxəyə daxil edilmir. AI seçiləndə seçilmiş söz və cümlələr Gemini-yə göndərilir; pulsuz planda Google bu məzmunu məhsullarını yaxşılaşdırmaq üçün istifadə edə bilər.</div>'+
       '<h4>Oxu</h4>'+
       '<div class="fld"><label>Şrift</label><select id="sFont">'+Object.keys(FN).map(k=>'<option value="'+k+'"'+(k===cfg.font?' selected':'')+'>'+FN[k]+'</option>').join('')+'</select></div>'+
       '<div class="fld"><label>Tema</label><select id="sTheme">'+THEMES.map(t=>'<option value="'+t[0]+'"'+(t[0]===cfg.theme?' selected':'')+'>'+t[1]+'</option>').join('')+'</select></div>'+
@@ -2337,8 +2576,41 @@ function openSettings(){
       '<div class="okline">Vikimənbə kitabları proxy-siz yüklənir. Gutenberg-in EPUB faylları üçün kiçik proxy lazımdır — README-də “Proxy” bölümünə bax.</div>'+
       '<h4>Tətbiq</h4>'+
       '<div class="setrow"><button id="bUpd">Yeniləmələri yoxla</button></div>'+
-      '<div class="okline">Oxu v3.2 · '+esc(location.host||'lokal fayl')+'</div>';
+      '<div class="okline">Oxu v3.3 · '+esc(location.host||'lokal fayl')+'</div>';
     const save=()=>{SV('cfg',cfg);applyTheme()};
+    /* ---- Gemini bölməsi ---- */
+    const gm=$('#sGModel'),gst=$('#sGStat');
+    const fillModels=list=>{
+      const ms=[...new Set([cfg.gmodel,...GEM_FALLBACK,...(list||[])])];
+      gm.innerHTML=ms.map(m=>'<option value="'+esc(m)+'"'+(m===cfg.gmodel?' selected':'')+'>'+esc(m)+'</option>').join('');
+    };
+    fillModels(LS('gmodels',[]));
+    const setSt=(t,c)=>{gst.textContent=t;gst.className='aistat'+(c?' '+c:'')};
+    $('#sEng').onchange=e=>{
+      cfg.engine=e.target.value;save();
+      if(cfg.engine==='ai'&&!gKey())setSt('AI üçün API açarı lazımdır — yuxarıdakı sahəyə yapışdır.','err');
+      else toast(cfg.engine==='ai'?'Tərcümə: Gemini (AI)':'Tərcümə: standart');
+    };
+    $('#sGKey').onchange=e=>{
+      setGKey(e.target.value);
+      setSt(gKey()?'Açar saxlanıldı. “Yoxla” düyməsi ilə sına.':'Açar silindi.');
+      if(!gKey()&&cfg.engine==='ai'){cfg.engine='google';save();$('#sEng').value='google'}
+    };
+    $('#sGShow').onclick=()=>{const i=$('#sGKey');i.type=i.type==='password'?'text':'password'};
+    gm.onchange=e=>{cfg.gmodel=e.target.value;save()};
+    $('#sGTest').onclick=async()=>{
+      setGKey($('#sGKey').value);const key=gKey();
+      if(!key){setSt('Əvvəlcə API açarını yaz.','err');return}
+      setSt('Yoxlanılır…');
+      try{
+        const list=await listGemModels(key);
+        SV('gmodels',list);
+        if(list.length&&!list.includes(cfg.gmodel)&&!GEM_FALLBACK.includes(cfg.gmodel)){cfg.gmodel=list[0];save()}
+        fillModels(list);
+        const r=await aiTr('Hello','Hello world.');
+        setSt('✓ İşləyir. Test: Hello → '+r.t+' · '+list.length+' model tapıldı','ok');
+      }catch(e){setSt('✗ '+(e.message||e),'err')}
+    };
     $('#sSrc').onchange=e=>{cfg.src=e.target.value;save()};
     $('#sDst').onchange=e=>{cfg.dst=e.target.value;save()};
     $('#sSwap').onclick=()=>{
@@ -2392,7 +2664,7 @@ function exportBackup(){
   try{
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);
-      if(!k||k==='tcache')continue;
+      if(!k||k==='tcache'||k==='gemkey')continue;
       try{keys[k]=JSON.parse(localStorage.getItem(k))}catch{}
     }
   }catch{}
@@ -2415,7 +2687,7 @@ function importBackup(file){
         SV('dict',dict);
       }
       if(d.keys&&typeof d.keys==='object'){
-        Object.keys(d.keys).forEach(k=>{if(k!=='cfg'&&k!=='dict'&&k.indexOf('cover:')!==0)SV(k,d.keys[k])});
+        Object.keys(d.keys).forEach(k=>{if(k!=='cfg'&&k!=='dict'&&k!=='gemkey'&&k.indexOf('cover:')!==0)SV(k,d.keys[k])});
       }
       SV('cfg',cfg);applyTheme();count();renderLib();closeSheet();
       toast('Bərpa olundu');
@@ -2581,6 +2853,7 @@ function swipeBind(el){
   el.addEventListener('touchend',e=>{
     if(x0==null)return;
     const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;
+    if(dragSel){x0=null;return}
     if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.2){hidePop();dx<0?next():prev()}
   },{passive:true});
   el.addEventListener('touchcancel',()=>{x0=null},{passive:true});
