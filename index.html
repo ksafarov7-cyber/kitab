@@ -1951,7 +1951,7 @@ const langName=c=>{const L=LANGS.find(l=>l[0]===c);return L?L[1]+' ('+c+')':c};
 function gemErr(status,j){
   const m=(j&&j.error&&j.error.message)||'';
   const e=new Error(status===400&&/API key|API_KEY/i.test(m)?'API açarı yanlışdır':
-    status===401||status===403?'API açarı icazəsizdir (403)':
+    status===401||status===403?'API açarı bu xidmət üçün icazəsizdir ('+status+'). aistudio.google.com/apikey-dən yeni Gemini açarı yarat':
     status===404?'Model tapılmadı':
     status===429?'Pulsuz limit doldu (429)':
     status>=500?'Gemini serveri cavab vermir ('+status+')':
@@ -2593,7 +2593,7 @@ function openSettings(){
     };
     $('#sGKey').onchange=e=>{
       setGKey(e.target.value);
-      setSt(gKey()?'Açar saxlanıldı. “Yoxla” düyməsi ilə sına.':'Açar silindi.');
+      setSt(!gKey()?'Açar silindi.':/^AQ\./.test(gKey())?'Diqqət: “AQ.” ilə başlayan açar çox vaxt Vertex AI üçündür və Gemini API-də 403 verir. “Yoxla” ilə sına; alınmasa AI Studio-dan yeni açar yarat.':'Açar saxlanıldı. “Yoxla” düyməsi ilə sına.');
       if(!gKey()&&cfg.engine==='ai'){cfg.engine='google';save();$('#sEng').value='google'}
     };
     $('#sGShow').onclick=()=>{const i=$('#sGKey');i.type=i.type==='password'?'text':'password'};
